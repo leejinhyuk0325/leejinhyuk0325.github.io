@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 export default function Header() {
@@ -11,18 +13,30 @@ export default function Header() {
             </Link>
           </div>
           <div className="hidden md:flex items-center space-x-6">
-            <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+            <Link
+              href="/search"
+              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+            >
               검색
-            </button>
-            <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+            </Link>
+            <Link
+              href="/community"
+              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+            >
               커뮤니티
-            </button>
-            <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+            </Link>
+            <Link
+              href="/qa"
+              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+            >
               Q&A
-            </button>
-            <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+            </Link>
+            <Link
+              href="/guide"
+              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+            >
               이용가이드
-            </button>
+            </Link>
             <Link
               href="/login"
               className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -35,4 +49,3 @@ export default function Header() {
     </header>
   );
 }
-

@@ -1,7 +1,16 @@
 import Link from "next/link";
+import { getPostById } from "@/data/posts";
+import { notFound } from "next/navigation";
 
-export default function DetailPage() {
-  const tags = ["#이세계", "#성장물", "#서사물", "#헌터물", "#현대판타지"];
+export default async function DetailPage({ params }) {
+  const { id } = await params;
+  const post = getPostById(id);
+
+  if (!post) {
+    notFound();
+  }
+
+  const tagList = post.tagList || post.tags.split(" ");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -12,17 +21,6 @@ export default function DetailPage() {
             <Link href="/" className="text-xl font-bold text-gray-900">
               Creative Crowdfunding
             </Link>
-            <nav className="hidden md:flex items-center space-x-6">
-              <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                캠페인
-              </button>
-              <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                스토리
-              </button>
-              <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                맛집 보기
-              </button>
-            </nav>
             <div className="flex items-center space-x-4">
               <button className="text-gray-600 hover:text-gray-900 p-2">
                 <svg
@@ -56,9 +54,33 @@ export default function DetailPage() {
         <section className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <span
+                  className={`text-sm font-medium px-3 py-1 rounded-full ${
+                    post.category === "popular"
+                      ? "bg-red-100 text-red-700"
+                      : post.category === "deadline"
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-purple-100 text-purple-700"
+                  }`}
+                >
+                  {post.category === "popular"
+                    ? "인기글"
+                    : post.category === "deadline"
+                    ? "오늘 마감"
+                    : "유료연재"}
+                </span>
+                <span className="text-sm text-gray-500">{post.deadline}</span>
+              </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                누렁이가 너무 강함
+                {post.title}
               </h1>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-sm text-gray-600">현재 신청: </span>
+                <span className="text-sm font-semibold text-blue-600">
+                  {post.meta}
+                </span>
+              </div>
             </div>
             <div className="flex items-center space-x-4 bg-blue-50 rounded-lg p-4">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
@@ -80,20 +102,22 @@ export default function DetailPage() {
                 <p className="text-sm font-medium text-gray-600">
                   연재 시작 조건
                 </p>
-                <p className="text-lg font-bold text-blue-600">30공유</p>
+                <p className="text-lg font-bold text-blue-600">
+                  {post.requirement}
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Provide Section */}
+        {/* Intro Section */}
         <section className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">도입부</h2>
           <div className="prose max-w-none">
-            <p className="text-gray-700 leading-relaxed mb-4">
-              누렁이가 우는 소리를 들어봤소?
-            </p>
-            <div className="text-center text-2xl text-yellow-400">★</div>
+            <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+              {post.intro}
+            </div>
+            <div className="text-center text-2xl text-yellow-400 mt-6">★</div>
           </div>
         </section>
 
@@ -142,14 +166,18 @@ export default function DetailPage() {
 
         {/* Tags Section */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {tags.map((tag, index) => (
-            <span
-              key={index}
-              className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors cursor-pointer"
-            >
-              {tag}
-            </span>
-          ))}
+          {tagList.map((tag, index) => {
+            const tagName = tag.replace("#", "");
+            return (
+              <Link
+                key={index}
+                href={`/search?tag=${encodeURIComponent(tagName)}`}
+                className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors cursor-pointer"
+              >
+                {tag}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Apply Button */}
@@ -160,4 +188,3 @@ export default function DetailPage() {
     </div>
   );
 }
-

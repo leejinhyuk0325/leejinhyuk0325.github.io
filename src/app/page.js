@@ -14,20 +14,23 @@ export default function Home() {
           posts={popularPosts}
           variant="default"
           gridCols="md:grid-cols-2 lg:grid-cols-3"
+          initialCount={3}
         />
 
         <PostSection
           title="오늘 마감"
           posts={todayDeadline}
           variant="urgent"
-          gridCols="md:grid-cols-2"
+          gridCols="md:grid-cols-2 lg:grid-cols-3"
+          initialCount={3}
         />
 
         <PostSection
           title="유료연재코너"
           posts={paidSeries}
           variant="paid"
-          gridCols="md:grid-cols-2"
+          gridCols="md:grid-cols-2 lg:grid-cols-3"
+          initialCount={3}
         />
       </main>
 
