@@ -44,12 +44,12 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Deploy (using npm run deploy)
+      - name: Build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          echo "Building and deploying with environment variables..."
+          echo "Building with environment variables..."
           if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ "$NEXT_PUBLIC_SUPABASE_URL" = "" ]; then
             echo "❌ ERROR: NEXT_PUBLIC_SUPABASE_URL is empty or not set"
             exit 1
@@ -58,5 +58,14 @@ jobs:
             echo "❌ ERROR: NEXT_PUBLIC_SUPABASE_ANON_KEY is empty or not set"
             exit 1
           fi
-          echo "Environment variables are set, proceeding with deploy..."
-          npm run deploy
+          echo "Environment variables are set, proceeding with build..."
+          npm run build
+          npm run postexport
+
+      - name: Deploy to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Deploying to GitHub Pages..."
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          npx gh-pages -d out --nojekyll --cname https://leejinhyuk0325.github.io
