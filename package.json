@@ -8,8 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "postexport": "shx touch out/.nojekyll",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d out"
+    "deploy": "next build && npm run postexport && gh-pages -d out --nojekyll --cname https://leejinhyuk0325.github.io"
   },
   "dependencies": {
     "next": "16.1.1",
@@ -21,6 +22,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "gh-pages": "^6.3.0",
+    "shx": "^0.4.0",
     "tailwindcss": "^4"
   }
 }
