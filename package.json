@@ -2,11 +2,14 @@
   "name": "ccf",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://leejinhyuk0325.github.io",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "next": "16.1.1",
