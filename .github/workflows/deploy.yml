@@ -12,7 +12,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,17 +20,41 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check environment variables
+        run: |
+          if [ -z "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ]; then
+            echo "⚠️  WARNING: NEXT_PUBLIC_SUPABASE_URL is not set"
+          else
+            echo "✅ NEXT_PUBLIC_SUPABASE_URL is set"
+          fi
+          if [ -z "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" ]; then
+            echo "⚠️  WARNING: NEXT_PUBLIC_SUPABASE_ANON_KEY is not set"
+          else
+            echo "✅ NEXT_PUBLIC_SUPABASE_ANON_KEY is set"
+          fi
 
       - name: Build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        run: npm run build
+        run: |
+          echo "Building with environment variables..."
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ "$NEXT_PUBLIC_SUPABASE_URL" = "" ]; then
+            echo "❌ ERROR: NEXT_PUBLIC_SUPABASE_URL is empty or not set"
+            exit 1
+          fi
+          if [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] || [ "$NEXT_PUBLIC_SUPABASE_ANON_KEY" = "" ]; then
+            echo "❌ ERROR: NEXT_PUBLIC_SUPABASE_ANON_KEY is empty or not set"
+            exit 1
+          fi
+          echo "Environment variables are set, proceeding with build..."
+          npm run build
 
       - name: Post export
         run: npm run postexport
@@ -41,4 +65,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./out
           cname: leejinhyuk0325.github.io
-
