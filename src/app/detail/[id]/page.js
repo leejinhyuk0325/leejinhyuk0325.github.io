@@ -1,6 +1,12 @@
 import Link from "next/link";
-import { getPostById } from "@/data/posts";
+import { getPostById, allPosts } from "@/data/posts";
 import { notFound } from "next/navigation";
+
+export async function generateStaticParams() {
+  return allPosts.map((post) => ({
+    id: post.id,
+  }));
+}
 
 export default async function DetailPage({ params }) {
   const { id } = await params;
