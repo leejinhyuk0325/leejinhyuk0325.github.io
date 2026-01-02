@@ -16,6 +16,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 3. **로컬 개발 환경 설정**: 프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 추가합니다:
 
 ```env
+
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
