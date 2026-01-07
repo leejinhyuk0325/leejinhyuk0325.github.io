@@ -1,0 +1,350 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import html2canvas from "html2canvas";
+import { supabase } from "@/utils/supabase";
+import { addShare, hasUserShared } from "@/utils/posts";
+
+export default function DetailContent({ post, tagList }) {
+  const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [shareCount, setShareCount] = useState(post.shareCount || 0);
+  const captureAreaRef = useRef(null);
+
+  const handleApplyClick = async () => {
+    // 사용자 세션 확인
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+      router.push("/login");
+      return;
+    }
+
+    const userId = session.user.id;
+    const postId = post.id;
+
+    // 이미 공유했는지 확인
+    const alreadyShared = await hasUserShared(postId, userId);
+
+    // 공유하지 않은 경우에만 shares 테이블에 추가
+    if (!alreadyShared) {
+      const result = await addShare(postId, userId);
+      if (result.success) {
+        // 공유 수 업데이트
+        setShareCount((prev) => prev + 1);
+      } else {
+        console.error("공유 추가 실패:", result.error);
+        // 에러가 발생해도 모달은 띄움
+      }
+    }
+
+    // 모달 열기
+    setIsModalOpen(true);
+    setIsCapturing(true);
+
+    // DOM이 업데이트될 시간을 주기 위해 약간의 지연
+    setTimeout(async () => {
+      try {
+        const element = document.getElementById("capture-area");
+        if (!element) {
+          console.error("capture-area를 찾을 수 없습니다.");
+          setIsCapturing(false);
+          return;
+        }
+
+        const canvas = await html2canvas(element, {
+          backgroundColor: "#f9fafb", // bg-gray-50
+          scale: 2, // 고해상도
+          logging: false,
+          useCORS: true,
+        });
+
+        const imageDataUrl = canvas.toDataURL("image/jpeg", 0.95);
+        setCapturedImage(imageDataUrl);
+      } catch (error) {
+        console.error("이미지 캡처 중 오류 발생:", error);
+      } finally {
+        setIsCapturing(false);
+      }
+    }, 100);
+  };
+
+  const handleDownload = () => {
+    if (!capturedImage) return;
+
+    const link = document.createElement("a");
+    link.download = `${post.title || "taste-application"}.jpg`;
+    link.href = capturedImage;
+    link.click();
+  };
+
+  const handleShare = async () => {
+    const tagsText = tagList.join(" ");
+    const shareText = `[${post.title}]\n\n${post.intro}\n\n${tagsText}`;
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      // 복사 성공 알림 (선택사항)
+      alert("클립보드에 복사되었습니다!");
+    } catch (error) {
+      console.error("클립보드 복사 실패:", error);
+      // 폴백: 텍스트 영역을 사용한 복사
+      const textArea = document.createElement("textarea");
+      textArea.value = shareText;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        alert("클립보드에 복사되었습니다!");
+      } catch (err) {
+        console.error("복사 실패:", err);
+        alert("복사에 실패했습니다. 텍스트를 직접 복사해주세요.");
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCapturedImage(null);
+  };
+
+  return (
+    <>
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="capture-area" ref={captureAreaRef}>
+          {/* Campaign Info Section */}
+          <section className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <span
+                    className={`text-sm font-medium px-3 py-1 rounded-full ${
+                      post.category === "popular"
+                        ? "bg-red-100 text-red-700"
+                        : post.category === "deadline"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
+                    {post.category === "popular"
+                      ? "인기글"
+                      : post.category === "deadline"
+                      ? "오늘 마감"
+                      : "유료연재"}
+                  </span>
+                  <span className="text-sm text-gray-500">{post.deadline}</span>
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {post.title}
+                </h1>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-sm text-gray-600">현재 공유: </span>
+                  <span className="text-sm font-semibold text-blue-600">
+                    {shareCount}회
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4 bg-blue-50 rounded-lg p-4">
+                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    연재 시작 조건
+                  </p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {post.requirement}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Intro Section */}
+          <section className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">도입부</h2>
+            <div className="prose max-w-none">
+              <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {post.intro}
+              </div>
+              <div className="text-center text-2xl text-yellow-400 mt-6">★</div>
+            </div>
+          </section>
+        </div>
+
+        {/* Notice Section */}
+        <section className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            참여 전 필수 확인사항
+          </h2>
+          <ul className="space-y-3">
+            <li className="flex items-start">
+              <svg
+                className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-gray-700">
+                재밌으셨다면 <strong className="font-semibold">공유</strong>{" "}
+                해주세요.
+              </span>
+            </li>
+            <li className="flex items-start">
+              <svg
+                className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-gray-700">
+                여러분의 관심이 작가에게{" "}
+                <strong className="font-semibold">큰 힘</strong>이 됩니다.
+              </span>
+            </li>
+          </ul>
+        </section>
+
+        {/* Tags Section */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {tagList.map((tag, index) => {
+            const tagName = tag.replace("#", "");
+            return (
+              <Link
+                key={index}
+                href={`/search?tag=${encodeURIComponent(tagName)}`}
+                className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors cursor-pointer"
+              >
+                {tag}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Apply Button */}
+        <button
+          onClick={handleApplyClick}
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-lg"
+        >
+          TASTE 신청하기
+        </button>
+      </main>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-2xl font-bold text-gray-900">
+                TASTE 신청 이미지 미리보기
+              </h2>
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {isCapturing ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                  <p className="text-gray-600">이미지를 생성하는 중...</p>
+                </div>
+              ) : capturedImage ? (
+                <div className="space-y-4">
+                  <div className="border rounded-lg overflow-hidden">
+                    <img
+                      src={capturedImage}
+                      alt="TASTE 신청 이미지"
+                      className="w-full h-auto"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleDownload}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
+                    >
+                      이미지 다운로드
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      className="flex-shrink-0 w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                      title="공유하기"
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-600">이미지를 생성할 수 없습니다.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

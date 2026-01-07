@@ -71,13 +71,11 @@ export default function CompleteProfilePage() {
       }
 
       // 인스타그램 아이디 저장
-      const { error: updateError } = await supabase
-        .from("users")
-        .upsert({
-          id: session.user.id,
-          instagram_id: instagramId.trim(),
-          updated_at: new Date().toISOString(),
-        });
+      const { error: updateError } = await supabase.from("users").upsert({
+        id: session.user.id,
+        instagram_id: instagramId.trim(),
+        updated_at: new Date().toISOString(),
+      });
 
       if (updateError) throw updateError;
 
@@ -86,9 +84,7 @@ export default function CompleteProfilePage() {
       router.refresh();
     } catch (err) {
       console.error("프로필 저장 오류:", err);
-      setError(
-        err.message || "프로필 저장에 실패했습니다. 다시 시도해주세요."
-      );
+      setError(err.message || "프로필 저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -171,4 +167,3 @@ export default function CompleteProfilePage() {
     </div>
   );
 }
-

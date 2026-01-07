@@ -82,10 +82,12 @@ export default function MyPage() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      // 로그아웃 성공 후 메인 페이지로 리다이렉트
       router.push("/");
       router.refresh();
     } catch (err) {
       console.error("로그아웃 오류:", err);
+      // 에러 발생 시에도 사용자에게 알림 (선택사항)
     }
   };
 
@@ -107,13 +109,11 @@ export default function MyPage() {
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
-        .from("users")
-        .upsert({
-          id: user.id,
-          instagram_id: instagramId.trim(),
-          updated_at: new Date().toISOString(),
-        });
+      const { error: updateError } = await supabase.from("users").upsert({
+        id: user.id,
+        instagram_id: instagramId.trim(),
+        updated_at: new Date().toISOString(),
+      });
 
       if (updateError) throw updateError;
 
@@ -127,7 +127,8 @@ export default function MyPage() {
     } catch (err) {
       console.error("인스타그램 아이디 저장 오류:", err);
       setError(
-        err.message || "인스타그램 아이디 저장에 실패했습니다. 다시 시도해주세요."
+        err.message ||
+          "인스타그램 아이디 저장에 실패했습니다. 다시 시도해주세요."
       );
     } finally {
       setSaving(false);
@@ -165,7 +166,9 @@ export default function MyPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
           {/* 페이지 제목 */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">마이페이지</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              마이페이지
+            </h1>
             <p className="text-gray-600">회원 정보를 확인하고 관리하세요.</p>
           </div>
 
@@ -182,7 +185,9 @@ export default function MyPage() {
                 <label className="block text-sm font-medium text-gray-500 mb-1">
                   이름
                 </label>
-                <p className="text-lg font-semibold text-gray-900">{userName}</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {userName}
+                </p>
               </div>
 
               <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -218,9 +223,7 @@ export default function MyPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                       disabled={saving}
                     />
-                    {error && (
-                      <p className="text-sm text-red-600">{error}</p>
-                    )}
+                    {error && <p className="text-sm text-red-600">{error}</p>}
                     <div className="flex gap-2">
                       <button
                         onClick={handleSaveInstagram}
@@ -284,4 +287,3 @@ export default function MyPage() {
     </div>
   );
 }
-
