@@ -8,7 +8,12 @@ import Footer from "@/components/Footer";
 
 export default function MyPage() {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingInstagram, setIsEditingInstagram] = useState(false);
+  const [instagramId, setInstagramId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -31,6 +36,22 @@ export default function MyPage() {
         }
 
         setUser(session.user);
+
+        // 사용자 프로필 정보 가져오기 (인스타그램 아이디 포함)
+        const { data: userProfile, error: profileError } = await supabase
+          .from("users")
+          .select("instagram_id")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profileError && profileError.code !== "PGRST116") {
+          console.error("프로필 가져오기 오류:", profileError);
+        }
+
+        if (userProfile) {
+          setProfile(userProfile);
+          setInstagramId(userProfile.instagram_id || "");
+        }
       } catch (err) {
         console.error("사용자 정보 가져오기 오류:", err);
         router.push("/login");
@@ -65,6 +86,51 @@ export default function MyPage() {
       router.refresh();
     } catch (err) {
       console.error("로그아웃 오류:", err);
+    }
+  };
+
+  const handleEditInstagram = () => {
+    setIsEditingInstagram(true);
+    setError(null);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingInstagram(false);
+    setInstagramId(profile?.instagram_id || "");
+    setError(null);
+  };
+
+  const handleSaveInstagram = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const { error: updateError } = await supabase
+        .from("users")
+        .upsert({
+          id: user.id,
+          instagram_id: instagramId.trim(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (updateError) throw updateError;
+
+      // 프로필 상태 업데이트
+      setProfile((prev) => ({
+        ...prev,
+        instagram_id: instagramId.trim(),
+      }));
+
+      setIsEditingInstagram(false);
+    } catch (err) {
+      console.error("인스타그램 아이디 저장 오류:", err);
+      setError(
+        err.message || "인스타그램 아이디 저장에 실패했습니다. 다시 시도해주세요."
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -126,6 +192,59 @@ export default function MyPage() {
                 <p className="text-lg font-semibold text-gray-900">
                   {user.email}
                 </p>
+              </div>
+
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-500">
+                    인스타그램 아이디
+                  </label>
+                  {!isEditingInstagram && (
+                    <button
+                      onClick={handleEditInstagram}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      수정
+                    </button>
+                  )}
+                </div>
+                {isEditingInstagram ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={instagramId}
+                      onChange={(e) => setInstagramId(e.target.value)}
+                      placeholder="@username 또는 username"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      disabled={saving}
+                    />
+                    {error && (
+                      <p className="text-sm text-red-600">{error}</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveInstagram}
+                        disabled={saving}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+                      >
+                        {saving ? "저장 중..." : "저장"}
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={saving}
+                        className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-lg font-semibold text-gray-900">
+                    {profile?.instagram_id
+                      ? `@${profile.instagram_id.replace(/^@/, "")}`
+                      : "미설정"}
+                  </p>
+                )}
               </div>
 
               {user.user_metadata?.avatar_url && (

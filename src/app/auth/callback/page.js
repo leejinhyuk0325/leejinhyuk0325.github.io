@@ -19,7 +19,32 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          // 로그인 성공
+          // 사용자 생성 시간 확인 (최근 1시간 이내 생성된 사용자만 신규 사용자로 간주)
+          const userCreatedAt = new Date(data.session.user.created_at);
+          const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+          const isNewUser = userCreatedAt > oneHourAgo;
+
+          // 신규 사용자인 경우에만 프로필 확인
+          if (isNewUser) {
+            const { data: profile, error: profileError } = await supabase
+              .from("users")
+              .select("instagram_id")
+              .eq("id", data.session.user.id)
+              .single();
+
+            if (profileError && profileError.code !== "PGRST116") {
+              // PGRST116은 "no rows returned" 에러 (프로필이 없는 경우)
+              console.error("프로필 확인 오류:", profileError);
+            }
+
+            // 신규 사용자이고 인스타그램 아이디가 없으면 추가 정보 입력 페이지로 리다이렉트
+            if (!profile || !profile.instagram_id) {
+              router.push("/complete-profile");
+              return;
+            }
+          }
+
+          // 기존 사용자이거나 프로필이 완성된 경우 마이페이지로 리다이렉트
           router.push("/mypage");
           router.refresh();
         } else {

@@ -23,9 +23,6 @@ export default function Footer() {
           >
             커뮤니티
           </Link>
-          <button className="text-gray-600 hover:text-gray-900 font-medium">
-            마이페이지
-          </button>
         </nav>
       </div>
     </footer>

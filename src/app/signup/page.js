@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase";
 
 export default function SignupPage() {
   const [userType, setUserType] = useState(null); // null, "author", "reader"
@@ -18,6 +20,9 @@ export default function SignupPage() {
     privacy: false,
     marketing: false,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const router = useRouter();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,26 +39,64 @@ export default function SignupPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
+    // 유효성 검사
     if (formData.password !== formData.confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다.");
+      setError("비밀번호가 일치하지 않습니다.");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      setLoading(false);
       return;
     }
 
     if (!agreements.terms || !agreements.privacy) {
-      alert("필수 약관에 동의해주세요.");
+      setError("필수 약관에 동의해주세요.");
+      setLoading(false);
       return;
     }
 
     if (userType === "author" && !formData.penName) {
-      alert("필명을 입력해주세요.");
+      setError("필명을 입력해주세요.");
+      setLoading(false);
       return;
     }
 
-    // 회원가입 로직 구현
-    console.log("회원가입 시도:", { userType, formData, agreements });
+    try {
+      // Supabase 회원가입
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            user_type: userType,
+            pen_name: formData.penName || null,
+            introduction: formData.introduction || null,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (data.user) {
+        // 회원가입 성공 - 추가 정보 입력 페이지로 리다이렉트
+        router.push("/complete-profile");
+      }
+    } catch (err) {
+      console.error("회원가입 오류:", err);
+      setError(
+        err.message || "회원가입에 실패했습니다. 다시 시도해주세요."
+      );
+      setLoading(false);
+    }
   };
 
   return (
@@ -74,6 +117,13 @@ export default function SignupPage() {
               CCF 계정을 만들고 펀딩을 시작해 보세요.
             </p>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
           {/* User Type Selection */}
           {!userType && (
@@ -241,13 +291,18 @@ export default function SignupPage() {
             {/* Signup Button */}
             <button
               type="submit"
-              className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg ${
+              disabled={loading}
+              className={`w-full font-semibold py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
                 userType === "author"
                   ? "bg-blue-600 hover:bg-blue-700 text-white"
                   : "bg-purple-600 hover:bg-purple-700 text-white"
               }`}
             >
-              {userType === "author" ? "작가 회원가입" : "독자 회원가입"}
+              {loading
+                ? "가입 중..."
+                : userType === "author"
+                ? "작가 회원가입"
+                : "독자 회원가입"}
             </button>
           </form>
 
