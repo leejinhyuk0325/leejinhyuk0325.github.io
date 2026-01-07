@@ -327,10 +327,10 @@ export async function hasUserShared(postId, userId) {
       .select("id")
       .eq("post_id", postId)
       .eq("user_id", userId)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
-    if (error && error.code !== "PGRST116") {
-      // PGRST116은 "no rows returned" 에러이므로 정상적인 경우
+    if (error) {
       console.error("Share 확인 오류:", error);
       return false;
     }

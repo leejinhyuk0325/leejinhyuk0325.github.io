@@ -79,6 +79,47 @@ export default function DetailContent({ post, tagList }) {
           logging: false,
           useCORS: true,
           onclone: (clonedDoc, clonedElement) => {
+            // 모든 스타일시트 규칙에서 lab() 색상 제거
+            try {
+              const styleSheets = Array.from(clonedDoc.styleSheets);
+              styleSheets.forEach((sheet) => {
+                try {
+                  const rules = Array.from(sheet.cssRules || []);
+                  rules.forEach((rule) => {
+                    if (rule.style) {
+                      const colorProperties = [
+                        "color",
+                        "background-color",
+                        "border-color",
+                        "border-top-color",
+                        "border-right-color",
+                        "border-bottom-color",
+                        "border-left-color",
+                        "outline-color",
+                      ];
+
+                      colorProperties.forEach((prop) => {
+                        const value = rule.style.getPropertyValue(prop);
+                        if (
+                          value &&
+                          (value.includes("lab(") ||
+                            value.includes("oklab(") ||
+                            value.includes("lch("))
+                        ) {
+                          // lab() 색상을 제거하거나 기본값으로 대체
+                          rule.style.removeProperty(prop);
+                        }
+                      });
+                    }
+                  });
+                } catch (e) {
+                  // Cross-origin 스타일시트는 접근할 수 없으므로 무시
+                }
+              });
+            } catch (e) {
+              // 스타일시트 접근 실패 무시
+            }
+
             // 복제된 문서의 모든 요소를 순회하면서 원본 요소의 계산된 색상으로 대체
             const walkElements = (clonedEl, originalEl) => {
               if (!clonedEl || !originalEl) return;
@@ -97,28 +138,23 @@ export default function DetailContent({ post, tagList }) {
                 ];
 
                 colorProperties.forEach((prop) => {
-                  const value = originalStyle.getPropertyValue(prop);
-                  // lab() 또는 다른 최신 색상 함수가 포함된 경우 RGB로 변환
-                  if (
-                    value &&
-                    (value.includes("lab(") ||
-                      value.includes("oklab(") ||
-                      value.includes("lch("))
-                  ) {
-                    // 원본 요소의 계산된 색상을 가져와서 적용
+                  try {
+                    // 계산된 색상 값을 가져옴 (항상 RGB 형식)
                     const computedValue = originalStyle[prop];
                     if (
                       computedValue &&
-                      !computedValue.includes("lab(") &&
-                      !computedValue.includes("oklab(") &&
-                      !computedValue.includes("lch(")
+                      computedValue !== "transparent" &&
+                      computedValue !== "rgba(0, 0, 0, 0)"
                     ) {
+                      // RGB 형식으로 변환된 값을 직접 적용
                       clonedEl.style.setProperty(
-                        prop,
+                        prop.replace(/([A-Z])/g, "-$1").toLowerCase(),
                         computedValue,
                         "important"
                       );
                     }
+                  } catch (e) {
+                    // 개별 속성 변환 실패 무시
                   }
                 });
               } catch (e) {
