@@ -79,53 +79,107 @@ export default function DetailContent({ post, tagList }) {
           logging: false,
           useCORS: true,
           onclone: (clonedDoc, clonedElement) => {
-            // 모든 스타일시트 규칙에서 lab() 색상 제거
+            // 모든 <style> 태그와 <link rel="stylesheet"> 태그 제거
             try {
-              const styleSheets = Array.from(clonedDoc.styleSheets);
-              styleSheets.forEach((sheet) => {
-                try {
-                  const rules = Array.from(sheet.cssRules || []);
-                  rules.forEach((rule) => {
-                    if (rule.style) {
-                      const colorProperties = [
-                        "color",
-                        "background-color",
-                        "border-color",
-                        "border-top-color",
-                        "border-right-color",
-                        "border-bottom-color",
-                        "border-left-color",
-                        "outline-color",
-                      ];
+              const styleTags = clonedDoc.querySelectorAll("style");
+              styleTags.forEach((styleTag) => {
+                styleTag.remove();
+              });
 
-                      colorProperties.forEach((prop) => {
-                        const value = rule.style.getPropertyValue(prop);
-                        if (
-                          value &&
-                          (value.includes("lab(") ||
-                            value.includes("oklab(") ||
-                            value.includes("lch("))
-                        ) {
-                          // lab() 색상을 제거하거나 기본값으로 대체
-                          rule.style.removeProperty(prop);
-                        }
-                      });
-                    }
-                  });
-                } catch (e) {
-                  // Cross-origin 스타일시트는 접근할 수 없으므로 무시
-                }
+              const linkTags = clonedDoc.querySelectorAll(
+                'link[rel="stylesheet"]'
+              );
+              linkTags.forEach((linkTag) => {
+                linkTag.remove();
               });
             } catch (e) {
-              // 스타일시트 접근 실패 무시
+              console.warn("스타일 태그 제거 실패:", e);
             }
 
-            // 복제된 문서의 모든 요소를 순회하면서 원본 요소의 계산된 색상으로 대체
+            // 모든 요소에 계산된 스타일을 인라인으로 적용
             const walkElements = (clonedEl, originalEl) => {
               if (!clonedEl || !originalEl) return;
 
               try {
                 const originalStyle = window.getComputedStyle(originalEl);
+
+                // 모든 중요한 스타일 속성을 인라인으로 적용
+                const styleProperties = [
+                  "color",
+                  "backgroundColor",
+                  "borderColor",
+                  "borderTopColor",
+                  "borderRightColor",
+                  "borderBottomColor",
+                  "borderLeftColor",
+                  "borderWidth",
+                  "borderTopWidth",
+                  "borderRightWidth",
+                  "borderBottomWidth",
+                  "borderLeftWidth",
+                  "borderStyle",
+                  "borderTopStyle",
+                  "borderRightStyle",
+                  "borderBottomStyle",
+                  "borderLeftStyle",
+                  "borderRadius",
+                  "padding",
+                  "paddingTop",
+                  "paddingRight",
+                  "paddingBottom",
+                  "paddingLeft",
+                  "margin",
+                  "marginTop",
+                  "marginRight",
+                  "marginBottom",
+                  "marginLeft",
+                  "fontSize",
+                  "fontWeight",
+                  "fontFamily",
+                  "lineHeight",
+                  "textAlign",
+                  "display",
+                  "flexDirection",
+                  "justifyContent",
+                  "alignItems",
+                  "width",
+                  "height",
+                  "minWidth",
+                  "minHeight",
+                  "maxWidth",
+                  "maxHeight",
+                ];
+
+                styleProperties.forEach((prop) => {
+                  try {
+                    const computedValue = originalStyle[prop];
+                    if (
+                      computedValue &&
+                      computedValue !== "none" &&
+                      computedValue !== "auto"
+                    ) {
+                      // lab() 색상이 포함되지 않은 경우에만 적용
+                      if (
+                        !computedValue.includes("lab(") &&
+                        !computedValue.includes("oklab(") &&
+                        !computedValue.includes("lch(")
+                      ) {
+                        const cssProp = prop
+                          .replace(/([A-Z])/g, "-$1")
+                          .toLowerCase();
+                        clonedEl.style.setProperty(
+                          cssProp,
+                          computedValue,
+                          "important"
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    // 개별 속성 변환 실패 무시
+                  }
+                });
+
+                // 색상 속성은 별도로 처리 (lab() 색상이 있을 수 있으므로)
                 const colorProperties = [
                   "color",
                   "backgroundColor",
@@ -134,21 +188,24 @@ export default function DetailContent({ post, tagList }) {
                   "borderRightColor",
                   "borderBottomColor",
                   "borderLeftColor",
-                  "outlineColor",
                 ];
 
                 colorProperties.forEach((prop) => {
                   try {
-                    // 계산된 색상 값을 가져옴 (항상 RGB 형식)
                     const computedValue = originalStyle[prop];
                     if (
                       computedValue &&
                       computedValue !== "transparent" &&
-                      computedValue !== "rgba(0, 0, 0, 0)"
+                      computedValue !== "rgba(0, 0, 0, 0)" &&
+                      !computedValue.includes("lab(") &&
+                      !computedValue.includes("oklab(") &&
+                      !computedValue.includes("lch(")
                     ) {
-                      // RGB 형식으로 변환된 값을 직접 적용
+                      const cssProp = prop
+                        .replace(/([A-Z])/g, "-$1")
+                        .toLowerCase();
                       clonedEl.style.setProperty(
-                        prop.replace(/([A-Z])/g, "-$1").toLowerCase(),
+                        cssProp,
                         computedValue,
                         "important"
                       );
