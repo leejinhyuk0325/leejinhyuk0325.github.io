@@ -20,7 +20,7 @@ export default function AuthCallback() {
 
         if (data.session) {
           // 로그인 성공
-          router.push("/");
+          router.push("/mypage");
           router.refresh();
         } else {
           // 세션이 없음
@@ -44,4 +44,3 @@ export default function AuthCallback() {
     </div>
   );
 }
-

@@ -40,7 +40,7 @@ function LoginForm() {
       if (error) throw error;
 
       if (data.user) {
-        router.push("/");
+        router.push("/mypage");
         router.refresh();
       }
     } catch (err) {
