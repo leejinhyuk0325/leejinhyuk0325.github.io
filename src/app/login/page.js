@@ -15,6 +15,23 @@ function LoginForm() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // 이미 로그인한 사용자인지 확인
+    const checkSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          router.push("/mypage");
+          return;
+        }
+      } catch (err) {
+        console.error("세션 확인 오류:", err);
+      }
+    };
+
+    checkSession();
+
     const errorParam = searchParams.get("error");
     if (errorParam) {
       const errorMessages = {
@@ -24,7 +41,7 @@ function LoginForm() {
       };
       setError(errorMessages[errorParam] || "로그인 중 오류가 발생했습니다.");
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
