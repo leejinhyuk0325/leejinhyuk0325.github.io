@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import html2canvas from "html2canvas";
 import { supabase } from "@/utils/supabase";
-import { addShare, hasUserShared } from "@/utils/posts";
+import { addShare, hasUserShared, getShareCount } from "@/utils/posts";
 
 export default function DetailContent({ post, tagList }) {
   const router = useRouter();
@@ -14,6 +14,20 @@ export default function DetailContent({ post, tagList }) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [shareCount, setShareCount] = useState(post.shareCount || 0);
   const captureAreaRef = useRef(null);
+
+  // 컴포넌트 마운트 시 최신 공유 수 가져오기
+  useEffect(() => {
+    const fetchLatestShareCount = async () => {
+      try {
+        const latestCount = await getShareCount(post.id);
+        setShareCount(latestCount);
+      } catch (error) {
+        console.error("공유 수 가져오기 실패:", error);
+      }
+    };
+
+    fetchLatestShareCount();
+  }, [post.id]);
 
   const handleApplyClick = async () => {
     // 사용자 세션 확인
@@ -64,6 +78,70 @@ export default function DetailContent({ post, tagList }) {
           scale: 2, // 고해상도
           logging: false,
           useCORS: true,
+          onclone: (clonedDoc, clonedElement) => {
+            // 복제된 문서의 모든 요소를 순회하면서 원본 요소의 계산된 색상으로 대체
+            const walkElements = (clonedEl, originalEl) => {
+              if (!clonedEl || !originalEl) return;
+
+              try {
+                const originalStyle = window.getComputedStyle(originalEl);
+                const colorProperties = [
+                  "color",
+                  "backgroundColor",
+                  "borderColor",
+                  "borderTopColor",
+                  "borderRightColor",
+                  "borderBottomColor",
+                  "borderLeftColor",
+                  "outlineColor",
+                ];
+
+                colorProperties.forEach((prop) => {
+                  const value = originalStyle.getPropertyValue(prop);
+                  // lab() 또는 다른 최신 색상 함수가 포함된 경우 RGB로 변환
+                  if (
+                    value &&
+                    (value.includes("lab(") ||
+                      value.includes("oklab(") ||
+                      value.includes("lch("))
+                  ) {
+                    // 원본 요소의 계산된 색상을 가져와서 적용
+                    const computedValue = originalStyle[prop];
+                    if (
+                      computedValue &&
+                      !computedValue.includes("lab(") &&
+                      !computedValue.includes("oklab(") &&
+                      !computedValue.includes("lch(")
+                    ) {
+                      clonedEl.style.setProperty(
+                        prop,
+                        computedValue,
+                        "important"
+                      );
+                    }
+                  }
+                });
+              } catch (e) {
+                // 에러 무시
+              }
+
+              // 자식 요소들도 재귀적으로 처리
+              const clonedChildren = Array.from(clonedEl.children);
+              const originalChildren = Array.from(originalEl.children);
+
+              clonedChildren.forEach((clonedChild, index) => {
+                if (originalChildren[index]) {
+                  walkElements(clonedChild, originalChildren[index]);
+                }
+              });
+            };
+
+            // 루트 요소부터 시작
+            const originalElement = document.getElementById("capture-area");
+            if (originalElement && clonedElement) {
+              walkElements(clonedElement, originalElement);
+            }
+          },
         });
 
         const imageDataUrl = canvas.toDataURL("image/jpeg", 0.95);

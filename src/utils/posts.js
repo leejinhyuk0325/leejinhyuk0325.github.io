@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 /**
  * Post의 share 개수 가져오기
  */
-async function getShareCount(postId) {
+export async function getShareCount(postId) {
   try {
     const { count, error } = await supabase
       .from("shares")

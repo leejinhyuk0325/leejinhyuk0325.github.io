@@ -1,10 +1,14 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getShareCount } from "@/utils/posts";
 
 export default function PostCard({ post, variant = "default" }) {
   const router = useRouter();
+  const [shareCount, setShareCount] = useState(post.shareCount || 0);
+
   const variantStyles = {
     default: "bg-white",
     urgent: "bg-white border-l-4 border-orange-500",
@@ -25,6 +29,20 @@ export default function PostCard({ post, variant = "default" }) {
 
   const tagList =
     post.tagList || post.tags.split(" ").filter((tag) => tag.trim());
+
+  // 컴포넌트 마운트 시 최신 공유 수 가져오기
+  useEffect(() => {
+    const fetchLatestShareCount = async () => {
+      try {
+        const latestCount = await getShareCount(post.id);
+        setShareCount(latestCount);
+      } catch (error) {
+        console.error("공유 수 가져오기 실패:", error);
+      }
+    };
+
+    fetchLatestShareCount();
+  }, [post.id]);
 
   const handleTagClick = (e, tag) => {
     e.preventDefault();
@@ -48,9 +66,7 @@ export default function PostCard({ post, variant = "default" }) {
             >
               {post.apply}
             </span>
-            <span className="text-xs text-gray-500">
-              {post.shareCount || 0} 공유
-            </span>
+            <span className="text-xs text-gray-500">{shareCount} 공유</span>
           </div>
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
