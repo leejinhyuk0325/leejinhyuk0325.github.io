@@ -47,22 +47,72 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### 데이터베이스 테이블
 
-**현재는 추가 DB 테이블이 필요하지 않습니다.**
+#### Posts 테이블 설정 (필수)
 
-- Supabase Auth만 사용 중이며, `auth.users` 테이블은 Supabase가 자동으로 관리합니다
-- 로그인 기능만 사용하는 경우 별도의 테이블 생성이 필요 없습니다
+이 프로젝트는 posts 데이터를 Supabase 데이터베이스에 저장합니다. 다음 단계를 따라 테이블을 생성하세요:
 
-**나중에 필요할 수 있는 테이블들:**
+1. **Supabase 대시보드에서 SQL Editor 열기**
 
-추가 기능을 구현할 때는 다음 테이블들을 생성할 수 있습니다:
+   - Supabase 대시보드에 로그인
+   - 왼쪽 사이드바에서 **SQL Editor** 클릭
+   - **New query** 클릭
+
+2. **테이블 생성 SQL 실행**
+
+   - `supabase/migrations/001_create_posts_table.sql` 파일의 내용을 복사
+   - SQL Editor에 붙여넣고 **Run** 버튼 클릭
+
+3. **기존 데이터 마이그레이션**
+
+   **방법 1: SQL 마이그레이션 사용 (권장)**
+
+   - Supabase 대시보드에서 **SQL Editor** 클릭
+   - `supabase/migrations/003_insert_initial_posts.sql` 파일의 내용을 복사하여 실행
+   - 가장 간단하고 빠른 방법입니다
+
+   **방법 2: 마이그레이션 스크립트 사용**
+
+   ```bash
+   # .env.local 파일에 Supabase 환경 변수가 설정되어 있어야 합니다
+   node scripts/migrate-posts-to-supabase.js
+   ```
+
+   **방법 3: Supabase 대시보드에서 직접 삽입**
+
+   - Table Editor에서 `posts` 테이블 선택
+   - `src/data/posts.js` 파일의 데이터를 참고하여 수동으로 입력
+
+4. **자세한 설정 가이드**
+   - `SUPABASE_SETUP.md` 파일을 참고하세요
+
+**Posts 테이블 구조:**
+
+- `id` (bigserial): Primary Key, Auto Increment
+- `title` (text): 포스트 제목
+- `deadline` (text): 마감일
+- `apply` (text): 신청 상태
+- `tags` (text): 태그 문자열
+- `category` (text): 카테고리 ('popular', 'deadline', 'paid')
+- `intro` (text): 소개글
+- `requirement` (text): 요구사항
+- `tag_list` (text[]): 태그 배열
+- `created_at` (timestamptz): 생성일시
+- `updated_at` (timestamptz): 수정일시
+
+**Share 테이블 구조 (Many-to-Many):**
+
+- `id` (bigserial): Primary Key, Auto Increment
+- `post_id` (bigint): Post ID (Foreign Key)
+- `user_id` (uuid): User ID (Foreign Key, auth.users 참조)
+- `created_at` (timestamptz): 생성일시
+- UNIQUE 제약: 한 사용자가 같은 post를 중복으로 share할 수 없음
+
+**추가로 필요할 수 있는 테이블들:**
 
 - **profiles**: 사용자 프로필 정보 (닉네임, 아바타, 소개 등)
-- **posts**: 게시글 데이터
 - **comments**: 댓글 데이터
 - **likes**: 좋아요 데이터
 - 기타 프로젝트에 필요한 테이블들
-
-테이블 생성은 Supabase 대시보드의 **Table Editor**에서 할 수 있습니다.
 
 ### 문제 해결
 

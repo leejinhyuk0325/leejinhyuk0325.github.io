@@ -1,9 +1,19 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PostSection from "@/components/PostSection";
-import { popularPosts, todayDeadline, paidSeries } from "@/data/posts";
+import {
+  getPopularPosts,
+  getTodayDeadlinePosts,
+  getPaidSeriesPosts,
+} from "@/utils/posts";
 
-export default function Home() {
+export default async function Home() {
+  const [popularPosts, todayDeadline, paidSeries] = await Promise.all([
+    getPopularPosts(),
+    getTodayDeadlinePosts(),
+    getPaidSeriesPosts(),
+  ]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />

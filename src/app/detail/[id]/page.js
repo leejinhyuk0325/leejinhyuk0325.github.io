@@ -1,16 +1,17 @@
 import Link from "next/link";
-import { getPostById, allPosts } from "@/data/posts";
+import { getPostById, getAllPostIds } from "@/utils/posts";
 import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
-  return allPosts.map((post) => ({
-    id: post.id,
+  const postIds = await getAllPostIds();
+  return postIds.map((id) => ({
+    id: id.toString(),
   }));
 }
 
 export default async function DetailPage({ params }) {
   const { id } = await params;
-  const post = getPostById(id);
+  const post = await getPostById(id);
 
   if (!post) {
     notFound();
@@ -82,9 +83,9 @@ export default async function DetailPage({ params }) {
                 {post.title}
               </h1>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-gray-600">현재 신청: </span>
+                <span className="text-sm text-gray-600">현재 공유: </span>
                 <span className="text-sm font-semibold text-blue-600">
-                  {post.meta}
+                  {post.shareCount || 0}회
                 </span>
               </div>
             </div>

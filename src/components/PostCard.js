@@ -48,7 +48,9 @@ export default function PostCard({ post, variant = "default" }) {
             >
               {post.apply}
             </span>
-            <span className="text-xs text-gray-500">{post.meta}</span>
+            <span className="text-xs text-gray-500">
+              {post.shareCount || 0} 공유
+            </span>
           </div>
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">

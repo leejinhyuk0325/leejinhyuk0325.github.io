@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PostCard from "@/components/PostCard";
-import { allPosts } from "@/data/posts";
+import { searchPosts } from "@/utils/posts";
 
 function SearchContent() {
   const router = useRouter();
@@ -14,36 +14,29 @@ function SearchContent() {
   const queryParam = searchParams.get("q") || "";
   const initialQuery = tagParam ? `#${tagParam}` : queryParam;
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const filteredPosts = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return [];
-    }
-
-    const query = searchQuery.toLowerCase();
-    const isTagSearch = query.startsWith("#");
-    const searchTerm = isTagSearch ? query.substring(1) : query;
-
-    return allPosts.filter((post) => {
-      if (isTagSearch) {
-        // 태그 검색: 정확한 태그 매칭
-        return (
-          post.tagList &&
-          post.tagList.some(
-            (tag) => tag.toLowerCase().replace("#", "") === searchTerm
-          )
-        );
-      } else {
-        // 일반 검색: 제목, 태그, 소개글에서 검색
-        return (
-          post.title.toLowerCase().includes(query) ||
-          post.tags.toLowerCase().includes(query) ||
-          post.intro.toLowerCase().includes(query) ||
-          (post.tagList &&
-            post.tagList.some((tag) => tag.toLowerCase().includes(query)))
-        );
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!searchQuery.trim()) {
+        setFilteredPosts([]);
+        return;
       }
-    });
+
+      setLoading(true);
+      try {
+        const results = await searchPosts(searchQuery);
+        setFilteredPosts(results);
+      } catch (error) {
+        console.error("검색 오류:", error);
+        setFilteredPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    performSearch();
   }, [searchQuery]);
 
   const handleSearchChange = (e) => {
@@ -122,10 +115,16 @@ function SearchContent() {
                 )}
               </h2>
               <p className="text-xs text-gray-600 mt-1">
-                {filteredPosts.length}개의 결과를 찾았습니다.
+                {loading
+                  ? "검색 중..."
+                  : `${filteredPosts.length}개의 결과를 찾았습니다.`}
               </p>
             </div>
-            {filteredPosts.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-xs text-gray-500">검색 중...</p>
+              </div>
+            ) : filteredPosts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPosts.map((post) => (
                   <PostCard key={post.id} post={post} variant="default" />
