@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import html2canvas from "html2canvas";
 import { supabase } from "@/utils/supabase";
-import { addShare, hasUserShared, getShareCount } from "@/utils/posts";
+import {
+  addShare,
+  hasUserShared,
+  getShareCount,
+  addFavorite,
+  removeFavorite,
+  hasUserFavorited,
+} from "@/utils/posts";
 
 export default function DetailContent({ post, tagList }) {
   const router = useRouter();
@@ -13,6 +20,8 @@ export default function DetailContent({ post, tagList }) {
   const [capturedImage, setCapturedImage] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [shareCount, setShareCount] = useState(post.shareCount || 0);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [checkingFavorite, setCheckingFavorite] = useState(true);
   const captureAreaRef = useRef(null);
 
   // 컴포넌트 마운트 시 최신 공유 수 가져오기
@@ -28,6 +37,58 @@ export default function DetailContent({ post, tagList }) {
 
     fetchLatestShareCount();
   }, [post.id]);
+
+  // 관심있는 글 상태 확인
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session) {
+          const favorited = await hasUserFavorited(post.id, session.user.id);
+          setIsFavorited(favorited);
+        }
+      } catch (error) {
+        console.error("관심있는 글 상태 확인 실패:", error);
+      } finally {
+        setCheckingFavorite(false);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [post.id]);
+
+  const handleToggleFavorite = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+
+    const userId = session.user.id;
+    const postId = post.id;
+
+    try {
+      if (isFavorited) {
+        const result = await removeFavorite(postId, userId);
+        if (result.success) {
+          setIsFavorited(false);
+        }
+      } else {
+        const result = await addFavorite(postId, userId);
+        if (result.success) {
+          setIsFavorited(true);
+        }
+      }
+    } catch (error) {
+      console.error("관심있는 글 토글 실패:", error);
+    }
+  };
 
   const handleApplyClick = async () => {
     // 사용자 세션 확인
@@ -304,21 +365,52 @@ export default function DetailContent({ post, tagList }) {
                       post.category === "popular"
                         ? "bg-red-100 text-red-700"
                         : post.category === "deadline"
-                        ? "bg-orange-100 text-orange-700"
+                        ? "bg-blue-100 text-blue-700"
                         : "bg-purple-100 text-purple-700"
                     }`}
                   >
                     {post.category === "popular"
-                      ? "인기글"
+                      ? "연재도전"
                       : post.category === "deadline"
                       ? "오늘 마감"
                       : "유료연재"}
                   </span>
                   <span className="text-sm text-gray-500">{post.deadline}</span>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {post.title}
-                </h1>
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 flex-1">
+                    {post.title}
+                  </h1>
+                  {!checkingFavorite && (
+                    <button
+                      onClick={handleToggleFavorite}
+                      className={`p-2 rounded-md transition-colors ${
+                        isFavorited
+                          ? "text-red-600 hover:text-red-700"
+                          : "text-gray-400 hover:text-red-600"
+                      }`}
+                      title={
+                        isFavorited
+                          ? "관심있는 글에서 제거"
+                          : "관심있는 글에 추가"
+                      }
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill={isFavorited ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-sm text-gray-600">현재 공유: </span>
                   <span className="text-sm font-semibold text-blue-600">

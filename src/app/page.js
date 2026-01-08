@@ -20,7 +20,7 @@ export default async function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PostSection
-          title="인기글"
+          title="연재도전"
           posts={popularPosts}
           variant="default"
           gridCols="md:grid-cols-2 lg:grid-cols-3"

@@ -11,13 +11,13 @@ export default function PostCard({ post, variant = "default" }) {
 
   const variantStyles = {
     default: "bg-white",
-    urgent: "bg-white border-l-4 border-orange-500",
+    urgent: "bg-white border-l-4 border-blue-500",
     paid: "bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200",
   };
 
   const deadlineColors = {
     default: "text-red-600",
-    urgent: "text-orange-600",
+    urgent: "text-blue-600",
     paid: "text-purple-600",
   };
 

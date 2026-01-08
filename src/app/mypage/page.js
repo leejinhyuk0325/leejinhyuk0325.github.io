@@ -5,15 +5,11 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Link from "next/link";
 
 export default function MyPage() {
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isEditingInstagram, setIsEditingInstagram] = useState(false);
-  const [instagramId, setInstagramId] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,22 +32,6 @@ export default function MyPage() {
         }
 
         setUser(session.user);
-
-        // 사용자 프로필 정보 가져오기 (인스타그램 아이디 포함)
-        const { data: userProfile, error: profileError } = await supabase
-          .from("users")
-          .select("instagram_id")
-          .eq("id", session.user.id)
-          .single();
-
-        if (profileError && profileError.code !== "PGRST116") {
-          console.error("프로필 가져오기 오류:", profileError);
-        }
-
-        if (userProfile) {
-          setProfile(userProfile);
-          setInstagramId(userProfile.instagram_id || "");
-        }
       } catch (err) {
         console.error("사용자 정보 가져오기 오류:", err);
         router.push("/login");
@@ -78,63 +58,6 @@ export default function MyPage() {
     };
   }, [router]);
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      // 로그아웃 성공 후 메인 페이지로 리다이렉트
-      router.push("/");
-      router.refresh();
-    } catch (err) {
-      console.error("로그아웃 오류:", err);
-      // 에러 발생 시에도 사용자에게 알림 (선택사항)
-    }
-  };
-
-  const handleEditInstagram = () => {
-    setIsEditingInstagram(true);
-    setError(null);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditingInstagram(false);
-    setInstagramId(profile?.instagram_id || "");
-    setError(null);
-  };
-
-  const handleSaveInstagram = async () => {
-    if (!user) return;
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      const { error: updateError } = await supabase.from("users").upsert({
-        id: user.id,
-        instagram_id: instagramId.trim(),
-        updated_at: new Date().toISOString(),
-      });
-
-      if (updateError) throw updateError;
-
-      // 프로필 상태 업데이트
-      setProfile((prev) => ({
-        ...prev,
-        instagram_id: instagramId.trim(),
-      }));
-
-      setIsEditingInstagram(false);
-    } catch (err) {
-      console.error("인스타그램 아이디 저장 오류:", err);
-      setError(
-        err.message ||
-          "인스타그램 아이디 저장에 실패했습니다. 다시 시도해주세요."
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -150,7 +73,6 @@ export default function MyPage() {
     return null;
   }
 
-  // 사용자 이름 가져오기 (user_metadata 또는 email에서)
   const userName =
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
@@ -169,106 +91,95 @@ export default function MyPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               마이페이지
             </h1>
-            <p className="text-gray-600">회원 정보를 확인하고 관리하세요.</p>
+            <p className="text-gray-600">원하는 페이지를 선택하세요.</p>
           </div>
 
           {/* 사용자 정보 카드 */}
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 md:p-8 mb-6">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 md:p-8 mb-8">
             <div className="flex items-center justify-center mb-6">
               <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                 {userName.charAt(0).toUpperCase()}
               </div>
             </div>
-
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  이름
-                </label>
-                <p className="text-lg font-semibold text-gray-900">
-                  {userName}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  이메일
-                </label>
-                <p className="text-lg font-semibold text-gray-900">
-                  {user.email}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-gray-500">
-                    인스타그램 아이디
-                  </label>
-                  {!isEditingInstagram && (
-                    <button
-                      onClick={handleEditInstagram}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      수정
-                    </button>
-                  )}
-                </div>
-                {isEditingInstagram ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={instagramId}
-                      onChange={(e) => setInstagramId(e.target.value)}
-                      placeholder="@username 또는 username"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      disabled={saving}
-                    />
-                    {error && <p className="text-sm text-red-600">{error}</p>}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveInstagram}
-                        disabled={saving}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
-                      >
-                        {saving ? "저장 중..." : "저장"}
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        disabled={saving}
-                        className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-lg font-semibold text-gray-900">
-                    {profile?.instagram_id
-                      ? `@${profile.instagram_id.replace(/^@/, "")}`
-                      : "미설정"}
-                  </p>
-                )}
-              </div>
-
-              {user.user_metadata?.avatar_url && (
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <label className="block text-sm font-medium text-gray-500 mb-1">
-                    프로필 이미지
-                  </label>
-                  <img
-                    src={user.user_metadata.avatar_url}
-                    alt="프로필"
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                </div>
-              )}
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                {userName}
+              </h2>
+              <p className="text-sm text-gray-600">{user.email}</p>
             </div>
+          </div>
+
+          {/* 페이지 선택 카드 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* 독자 페이지 */}
+            <Link
+              href="/mypage/reader"
+              className="group bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8 hover:shadow-lg transition-all transform hover:scale-105"
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-700 transition-colors">
+                  <svg
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  독자페이지
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  공유한 게시글과 관심있는 글을 모아서 볼 수 있습니다.
+                </p>
+              </div>
+            </Link>
+
+            {/* 작가 페이지 */}
+            <Link
+              href="/mypage/author"
+              className="group bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-8 hover:shadow-lg transition-all transform hover:scale-105"
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-700 transition-colors">
+                  <svg
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  작가페이지
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  연재도전에 연재하고 작품을 관리할 수 있습니다.
+                </p>
+              </div>
+            </Link>
           </div>
 
           {/* 액션 버튼 */}
           <div className="flex flex-col sm:flex-row gap-4">
             <button
-              onClick={handleLogout}
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push("/");
+                router.refresh();
+              }}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg"
             >
               로그아웃

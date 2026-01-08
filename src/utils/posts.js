@@ -150,7 +150,7 @@ export async function getPostsByCategory(category) {
 }
 
 /**
- * 인기글 가져오기
+ * 연재도전 가져오기
  */
 export async function getPopularPosts() {
   return getPostsByCategory("popular");
@@ -339,6 +339,193 @@ export async function hasUserShared(postId, userId) {
   } catch (err) {
     console.error("Share 확인 예외:", err);
     return false;
+  }
+}
+
+/**
+ * 사용자가 공유한 게시글 목록 가져오기
+ */
+export async function getUserSharedPosts(userId) {
+  try {
+    const { data, error } = await supabase
+      .from("shares")
+      .select(`
+        post_id,
+        created_at,
+        posts (*)
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("공유한 게시글 가져오기 오류:", error);
+      return [];
+    }
+
+    // share 개수 가져오기
+    const postIds = data.map((share) => share.post_id);
+    const shareCounts = await getShareCounts(postIds);
+
+    return data
+      .filter((share) => share.posts)
+      .map((share) => ({
+        ...share.posts,
+        tagList: share.posts.tag_list || [],
+        shareCount: shareCounts[share.post_id] || 0,
+        sharedAt: share.created_at,
+      }));
+  } catch (err) {
+    console.error("공유한 게시글 가져오기 예외:", err);
+    return [];
+  }
+}
+
+/**
+ * 관심있는 글 추가
+ */
+export async function addFavorite(postId, userId) {
+  try {
+    const { data, error } = await supabase
+      .from("favorites")
+      .insert({
+        post_id: postId,
+        user_id: userId,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("관심있는 글 추가 오류:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (err) {
+    console.error("관심있는 글 추가 예외:", err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * 관심있는 글 제거
+ */
+export async function removeFavorite(postId, userId) {
+  try {
+    const { error } = await supabase
+      .from("favorites")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("관심있는 글 제거 오류:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("관심있는 글 제거 예외:", err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * 사용자가 관심있는 글 목록 가져오기
+ */
+export async function getUserFavorites(userId) {
+  try {
+    const { data, error } = await supabase
+      .from("favorites")
+      .select(`
+        post_id,
+        created_at,
+        posts (*)
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("관심있는 글 가져오기 오류:", error);
+      return [];
+    }
+
+    // share 개수 가져오기
+    const postIds = data.map((fav) => fav.post_id);
+    const shareCounts = await getShareCounts(postIds);
+
+    return data
+      .filter((fav) => fav.posts)
+      .map((fav) => ({
+        ...fav.posts,
+        tagList: fav.posts.tag_list || [],
+        shareCount: shareCounts[fav.post_id] || 0,
+        favoritedAt: fav.created_at,
+      }));
+  } catch (err) {
+    console.error("관심있는 글 가져오기 예외:", err);
+    return [];
+  }
+}
+
+/**
+ * 사용자가 특정 Post를 관심있는 글에 추가했는지 확인
+ */
+export async function hasUserFavorited(postId, userId) {
+  try {
+    const { data, error } = await supabase
+      .from("favorites")
+      .select("id")
+      .eq("post_id", postId)
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("관심있는 글 확인 오류:", error);
+      return false;
+    }
+
+    return !!data;
+  } catch (err) {
+    console.error("관심있는 글 확인 예외:", err);
+    return false;
+  }
+}
+
+/**
+ * 연재도전에 연재하기 (카테고리를 popular로 변경)
+ */
+export async function publishToPopular(postId, userId) {
+  try {
+    // 먼저 해당 게시글이 현재 사용자의 것인지 확인 (선택사항)
+    const { data: post, error: postError } = await supabase
+      .from("posts")
+      .select("id, category")
+      .eq("id", postId)
+      .single();
+
+    if (postError || !post) {
+      console.error("게시글 찾기 오류:", postError);
+      return { success: false, error: postError || new Error("게시글을 찾을 수 없습니다.") };
+    }
+
+    // 카테고리를 popular로 변경
+    const { data, error } = await supabase
+      .from("posts")
+      .update({ category: "popular" })
+      .eq("id", postId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("연재도전 연재 오류:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (err) {
+    console.error("연재도전 연재 예외:", err);
+    return { success: false, error: err };
   }
 }
 

@@ -91,7 +91,7 @@ export default function Header() {
               <>
                 <Link
                   href="/mypage"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-bold"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-[28px] font-bold"
                 >
                   마이페이지
                 </Link>
