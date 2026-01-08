@@ -87,7 +87,14 @@ function LoginForm() {
         router.refresh();
       }
     } catch (err) {
-      setError(err.message || "로그인에 실패했습니다.");
+      // 이메일 확인 오류 처리
+      if (err.message && err.message.includes("Email not confirmed")) {
+        setError(
+          "이메일 인증이 완료되지 않았습니다. 이메일을 확인하여 인증 링크를 클릭해주세요."
+        );
+      } else {
+        setError(err.message || "로그인에 실패했습니다.");
+      }
     } finally {
       setLoading(false);
     }

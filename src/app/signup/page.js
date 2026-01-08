@@ -75,6 +75,15 @@ export default function SignupPage() {
       if (signUpError) throw signUpError;
 
       if (data.user) {
+        // 이메일 확인이 필요한 경우 안내
+        if (data.user.email_confirmed_at === null) {
+          setError(
+            "회원가입이 완료되었습니다. 이메일을 확인하여 인증 링크를 클릭해주세요. (이메일 확인이 비활성화된 경우 바로 로그인할 수 있습니다.)"
+          );
+          setLoading(false);
+          return;
+        }
+        
         // 회원가입 성공 - 추가 정보 입력 페이지로 리다이렉트
         router.push("/complete-profile");
       }
