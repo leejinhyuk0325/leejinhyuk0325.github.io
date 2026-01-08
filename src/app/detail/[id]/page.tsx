@@ -175,9 +175,15 @@ export default function DetailPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm font-medium px-3 py-1 rounded-full bg-red-100 text-red-700">
-                  인기글
-                </span>
+                {post.deadline === '오늘 마감' || post.deadline === '마감' ? (
+                  <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+                    {post.deadline}
+                  </span>
+                ) : (
+                  <span className="text-sm font-medium px-3 py-1 rounded-full bg-red-100 text-red-700">
+                    인기글
+                  </span>
+                )}
                 <span className="text-sm text-gray-500">{post.deadline}</span>
               </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
