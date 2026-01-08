@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/auth/callback/page": "app/auth/callback/page.js",
+  "/community/page": "app/community/page.js",
+  "/detail/[id]/page": "app/detail/[id]/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/guide/page": "app/guide/page.js",
+  "/login/page": "app/login/page.js",
+  "/notice/page": "app/notice/page.js",
+  "/page": "app/page.js",
+  "/qa/page": "app/qa/page.js",
+  "/search/page": "app/search/page.js",
+  "/signup/page": "app/signup/page.js"
+}

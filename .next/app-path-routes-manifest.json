@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/auth/callback/page": "/auth/callback",
+  "/community/page": "/community",
+  "/detail/[id]/page": "/detail/[id]",
+  "/favicon.ico/route": "/favicon.ico",
+  "/guide/page": "/guide",
+  "/login/page": "/login",
+  "/notice/page": "/notice",
+  "/page": "/",
+  "/qa/page": "/qa",
+  "/search/page": "/search",
+  "/signup/page": "/signup"
+}
