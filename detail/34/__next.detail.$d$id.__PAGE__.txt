@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[78933,["/_next/static/chunks/a5067930228fd636.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/57ec98b91d542853.js"],"default"]
+3:I[48382,["/_next/static/chunks/a5067930228fd636.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/57ec98b91d542853.js"],"default"]
+4:I[97367,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"buildId":"PiwxKcGLEPYr5tFvOnOlP","rsc":["$","$1","c",{"children":[["$","div",null,{"className":"min-h-screen bg-gray-50","children":[["$","$L2",null,{}],["$","$L3",null,{"post":{"id":34,"title":"이세계 카페","deadline":"12일 남음","apply":"신청","tags":"#이세계 #카페 #판타지","category":"paid","intro":"이세계에 카페를 열어 성공하는 이야기.\r\n\r\n현대의 카페 문화를 판타지 세계에 전파합니다. 독특한 컨셉의 경영 판타지입니다.","requirement":"11공유","tag_list":["#이세계","#카페","#판타지"],"created_at":"2026-01-07T02:25:06.479584+00:00","updated_at":"2026-01-07T02:25:06.479584+00:00","tagList":["#이세계","#카페","#판타지"],"shareCount":0},"tagList":["#이세계","#카페","#판타지"]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/a5067930228fd636.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/9a4cb47a3cce1582.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/57ec98b91d542853.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"loading":null,"isPartial":false}
+6:null

@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[78933,["/_next/static/chunks/a5067930228fd636.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/57ec98b91d542853.js"],"default"]
+3:I[48382,["/_next/static/chunks/a5067930228fd636.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/57ec98b91d542853.js"],"default"]
+4:I[97367,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"buildId":"PiwxKcGLEPYr5tFvOnOlP","rsc":["$","$1","c",{"children":[["$","div",null,{"className":"min-h-screen bg-gray-50","children":[["$","$L2",null,{}],["$","$L3",null,{"post":{"id":25,"title":"비밀의 열쇠","deadline":"오늘 마감","apply":"신청","tags":"#모험 #보물 #탐험","category":"deadline","intro":"비밀의 보물을 찾기 위한 마지막 기회.\r\n\r\n열쇠를 찾아야 합니다. 시간이 얼마 남지 않았습니다. 보물은 누구의 것이 될까요?","requirement":"80공유","tag_list":["#모험","#보물","#탐험"],"created_at":"2026-01-07T02:25:06.479584+00:00","updated_at":"2026-01-07T02:25:06.479584+00:00","tagList":["#모험","#보물","#탐험"],"shareCount":0},"tagList":["#모험","#보물","#탐험"]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/a5067930228fd636.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/9a4cb47a3cce1582.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/57ec98b91d542853.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"loading":null,"isPartial":false}
+6:null

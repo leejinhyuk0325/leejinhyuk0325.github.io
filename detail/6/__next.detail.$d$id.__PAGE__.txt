@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[78933,["/_next/static/chunks/a5067930228fd636.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/57ec98b91d542853.js"],"default"]
+3:I[48382,["/_next/static/chunks/a5067930228fd636.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/57ec98b91d542853.js"],"default"]
+4:I[97367,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"buildId":"PiwxKcGLEPYr5tFvOnOlP","rsc":["$","$1","c",{"children":[["$","div",null,{"className":"min-h-screen bg-gray-50","children":[["$","$L2",null,{}],["$","$L3",null,{"post":{"id":6,"title":"내가 랩업하면 자식이 스텟 쌓임","deadline":"10일 남음","apply":"신청","tags":"#성장물 #부모님의 고생을 곁들인","category":"paid","intro":"부모가 랩업을 하면 자식의 능력치가 올라가는 독특한 성장물.\r\n\r\n아버지가 운동을 하면 아들의 힘이 오르고, 어머니가 공부를 하면 딸의 지능이 상승합니다. 부모의 노력이 자식에게 전달되는 감동적인 스토리입니다.","requirement":"20공유","tag_list":["#성장물","#부모님의 고생을 곁들인"],"created_at":"2026-01-07T02:25:06.479584+00:00","updated_at":"2026-01-07T02:25:06.479584+00:00","tagList":["#성장물","#부모님의 고생을 곁들인"],"shareCount":0},"tagList":["#성장물","#부모님의 고생을 곁들인"]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/a5067930228fd636.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/9a4cb47a3cce1582.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/57ec98b91d542853.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"loading":null,"isPartial":false}
+6:null
