@@ -312,7 +312,7 @@ export default function DetailContent({ post, tagList }) {
     if (!capturedImage) return;
 
     const link = document.createElement("a");
-    link.download = `${post.title || "taste-application"}.jpg`;
+    link.download = `${post.title || "share"}.jpg`;
     link.href = capturedImage;
     link.click();
   };
@@ -522,7 +522,7 @@ export default function DetailContent({ post, tagList }) {
           onClick={handleApplyClick}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-lg"
         >
-          TASTE 신청하기
+          공유하기
         </button>
       </main>
 
@@ -533,7 +533,7 @@ export default function DetailContent({ post, tagList }) {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-2xl font-bold text-gray-900">
-                TASTE 신청 이미지 미리보기
+                공유 이미지 미리보기
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -567,7 +567,7 @@ export default function DetailContent({ post, tagList }) {
                   <div className="border rounded-lg overflow-hidden">
                     <img
                       src={capturedImage}
-                      alt="TASTE 신청 이미지"
+                      alt="공유 이미지"
                       className="w-full h-auto"
                     />
                   </div>
