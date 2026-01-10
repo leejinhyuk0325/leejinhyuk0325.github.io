@@ -69,22 +69,21 @@ export default function SignupPage() {
           data: {
             name: formData.name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (signUpError) throw signUpError;
 
       if (data.user) {
-        // 이메일 확인이 필요한 경우 안내
+        // 이메일 확인이 필요한 경우 이메일 인증 페이지로 리다이렉트
         if (data.user.email_confirmed_at === null) {
-          setError(
-            "회원가입이 완료되었습니다. 이메일을 확인하여 인증 링크를 클릭해주세요. (이메일 확인이 비활성화된 경우 바로 로그인할 수 있습니다.)"
-          );
-          setLoading(false);
+          // 이메일 주소를 쿼리 파라미터로 전달
+          router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
           return;
         }
         
-        // 회원가입 성공 - 추가 정보 입력 페이지로 리다이렉트
+        // 이메일이 이미 확인된 경우 (이메일 확인이 비활성화된 경우)
         router.push("/complete-profile");
       }
     } catch (err) {

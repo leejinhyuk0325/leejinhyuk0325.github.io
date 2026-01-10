@@ -19,25 +19,28 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          // 사용자 생성 시간 확인 (최근 1시간 이내 생성된 사용자만 신규 사용자로 간주)
-          const userCreatedAt = new Date(data.session.user.created_at);
+          const user = data.session.user;
+          
+          // 이메일 인증이 방금 완료된 신규 사용자인지 확인
+          const userCreatedAt = new Date(user.created_at);
           const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
           const isNewUser = userCreatedAt > oneHourAgo;
+          const isEmailJustConfirmed = user.email_confirmed_at && 
+            new Date(user.email_confirmed_at) > new Date(Date.now() - 5 * 60 * 1000); // 5분 이내
 
-          // 신규 사용자인 경우에만 프로필 확인
-          if (isNewUser) {
+          // 신규 사용자이고 이메일이 방금 인증된 경우 프로필 완성 페이지로
+          if (isNewUser && isEmailJustConfirmed) {
             const { data: profile, error: profileError } = await supabase
               .from("users")
               .select("instagram_id")
-              .eq("id", data.session.user.id)
+              .eq("id", user.id)
               .single();
 
             if (profileError && profileError.code !== "PGRST116") {
-              // PGRST116은 "no rows returned" 에러 (프로필이 없는 경우)
               console.error("프로필 확인 오류:", profileError);
             }
 
-            // 신규 사용자이고 인스타그램 아이디가 없으면 추가 정보 입력 페이지로 리다이렉트
+            // 인스타그램 아이디가 없으면 추가 정보 입력 페이지로 리다이렉트
             if (!profile || !profile.instagram_id) {
               router.push("/complete-profile");
               return;

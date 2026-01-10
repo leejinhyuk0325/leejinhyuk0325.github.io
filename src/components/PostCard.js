@@ -11,7 +11,7 @@ export default function PostCard({ post, variant = "default" }) {
 
   const variantStyles = {
     default: "bg-white",
-    urgent: "bg-white border-l-4 border-blue-500",
+    urgent: "bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200",
     paid: "bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200",
   };
 
