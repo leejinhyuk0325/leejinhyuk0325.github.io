@@ -1,17 +1,26 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { getQuestions } from "@/utils/qa";
 
 export default function QAPage() {
-  const categories = [
-    { id: "all", name: "전체", count: 156 },
-    { id: "account", name: "계정/로그인", count: 32 },
-    { id: "taste", name: "TASTE 신청", count: 45 },
-    { id: "payment", name: "결제/환불", count: 18 },
-    { id: "content", name: "콘텐츠 관련", count: 28 },
-    { id: "technical", name: "기술 지원", count: 15 },
-    { id: "other", name: "기타", count: 18 },
-  ];
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category") || "all";
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([
+    { id: "all", name: "전체", count: 0 },
+    { id: "account", name: "계정/로그인", count: 0 },
+    { id: "taste", name: "TASTE 신청", count: 0 },
+    { id: "payment", name: "결제/환불", count: 0 },
+    { id: "content", name: "콘텐츠 관련", count: 0 },
+    { id: "technical", name: "기술 지원", count: 0 },
+    { id: "other", name: "기타", count: 0 },
+  ]);
 
   const faqs = [
     {
@@ -52,96 +61,43 @@ export default function QAPage() {
     },
   ];
 
-  const questions = [
-    {
-      id: 1,
-      category: "TASTE 신청",
-      title: "공유 조건을 달성했는데 연재가 시작되지 않아요",
-      author: "궁금이",
-      date: "2024-01-15",
-      views: 234,
-      answers: 2,
-      isSolved: false,
-      isUrgent: false,
-    },
-    {
-      id: 2,
-      category: "계정/로그인",
-      title: "비밀번호를 잊어버렸어요. 어떻게 찾나요?",
-      author: "비밀번호분실",
-      date: "2024-01-14",
-      views: 189,
-      answers: 1,
-      isSolved: true,
-      isUrgent: false,
-    },
-    {
-      id: 3,
-      category: "콘텐츠 관련",
-      title: "작품 추천 기능은 어떻게 사용하나요?",
-      author: "독서왕",
-      date: "2024-01-13",
-      views: 312,
-      answers: 3,
-      isSolved: false,
-      isUrgent: false,
-    },
-    {
-      id: 4,
-      category: "기술 지원",
-      title: "페이지가 제대로 로드되지 않아요",
-      author: "기술고민",
-      date: "2024-01-12",
-      views: 156,
-      answers: 0,
-      isSolved: false,
-      isUrgent: true,
-    },
-    {
-      id: 5,
-      category: "결제/환불",
-      title: "환불은 어떻게 받나요?",
-      author: "환불문의",
-      date: "2024-01-11",
-      views: 278,
-      answers: 1,
-      isSolved: true,
-      isUrgent: false,
-    },
-    {
-      id: 6,
-      category: "TASTE 신청",
-      title: "여러 작품에 동시에 신청할 수 있나요?",
-      author: "다작신청",
-      date: "2024-01-10",
-      views: 201,
-      answers: 2,
-      isSolved: false,
-      isUrgent: false,
-    },
-    {
-      id: 7,
-      category: "콘텐츠 관련",
-      title: "작품 검색은 어떻게 하나요?",
-      author: "검색초보",
-      date: "2024-01-09",
-      views: 167,
-      answers: 1,
-      isSolved: true,
-      isUrgent: false,
-    },
-    {
-      id: 8,
-      category: "기타",
-      title: "작가 지원은 어떻게 하나요?",
-      author: "작가지망생",
-      date: "2024-01-08",
-      views: 145,
-      answers: 0,
-      isSolved: false,
-      isUrgent: false,
-    },
-  ];
+  useEffect(() => {
+    const loadQuestions = async () => {
+      setLoading(true);
+      const result = await getQuestions(category);
+      if (result.success) {
+        setQuestions(result.data || []);
+      }
+
+      // 카테고리별 개수 가져오기
+      const categoryCounts = {};
+      for (const cat of categories) {
+        if (cat.id !== "all") {
+          const catResult = await getQuestions(cat.id);
+          if (catResult.success) {
+            categoryCounts[cat.id] = catResult.count || 0;
+          }
+        }
+      }
+
+      // 전체 개수
+      const allResult = await getQuestions("all");
+      if (allResult.success) {
+        categoryCounts.all = allResult.count || 0;
+      }
+
+      setCategories((prev) =>
+        prev.map((cat) => ({
+          ...cat,
+          count: categoryCounts[cat.id] || 0,
+        }))
+      );
+
+      setLoading(false);
+    };
+
+    loadQuestions();
+  }, [category]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -239,62 +195,84 @@ export default function QAPage() {
               </div>
 
               {/* 질문 목록 */}
-              <div className="divide-y divide-gray-200">
-                {questions.map((question, index) => (
-                  <Link
-                    key={question.id}
-                    href={`/qa/${question.id}`}
-                    className="block px-6 py-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="grid grid-cols-12 gap-4 items-center">
-                      <div className="col-span-1 text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          {question.isSolved ? (
-                            <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">
-                              해결
+              {loading ? (
+                <div className="px-6 py-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">로딩 중...</p>
+                </div>
+              ) : questions.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <p className="text-gray-600">질문이 없습니다.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {questions.map((question) => {
+                    const categoryName =
+                      categories.find((c) => c.id === question.category)?.name ||
+                      question.category;
+                    const authorName =
+                      question.author?.email?.split("@")[0] || "익명";
+                    const date = new Date(question.created_at).toLocaleDateString(
+                      "ko-KR"
+                    );
+
+                    return (
+                      <Link
+                        key={question.id}
+                        href={`/qa/${question.id}`}
+                        className="block px-6 py-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="grid grid-cols-12 gap-4 items-center">
+                          <div className="col-span-1 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              {question.is_solved ? (
+                                <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">
+                                  해결
+                                </span>
+                              ) : (
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                                  대기
+                                </span>
+                              )}
+                              {question.is_urgent && (
+                                <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
+                                  긴급
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="col-span-6">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                {categoryName}
+                              </span>
+                              <span className="text-sm font-medium text-gray-900 truncate">
+                                {question.title}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-gray-500">
+                                조회 {question.views || 0}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="col-span-2 text-center text-sm text-gray-600">
+                            {authorName}
+                          </div>
+                          <div className="col-span-2 text-center text-sm text-gray-500">
+                            {date}
+                          </div>
+                          <div className="col-span-1 text-center">
+                            <span className="text-sm font-medium text-blue-600">
+                              {question.answers || 0}
                             </span>
-                          ) : (
-                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-                              대기
-                            </span>
-                          )}
-                          {question.isUrgent && (
-                            <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
-                              긴급
-                            </span>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="col-span-6">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                            {question.category}
-                          </span>
-                          <span className="text-sm font-medium text-gray-900 truncate">
-                            {question.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-gray-500">
-                            조회 {question.views}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="col-span-2 text-center text-sm text-gray-600">
-                        {question.author}
-                      </div>
-                      <div className="col-span-2 text-center text-sm text-gray-500">
-                        {question.date}
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <span className="text-sm font-medium text-blue-600">
-                          {question.answers}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* 페이지네이션 */}
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">

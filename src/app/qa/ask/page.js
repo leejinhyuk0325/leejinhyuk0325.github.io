@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
+import { createQuestion } from "@/utils/qa";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -63,9 +64,20 @@ export default function QAAskPage() {
         return;
       }
 
-      // TODO: 실제 데이터베이스에 저장하는 로직 구현 필요
-      // 현재는 임시로 alert만 표시
-      alert("질문이 등록되었습니다! (데이터베이스 연동 필요)");
+      // 데이터베이스에 저장
+      const result = await createQuestion(
+        title,
+        content,
+        category,
+        session.user.id
+      );
+
+      if (!result.success) {
+        setError(result.error || "질문 작성에 실패했습니다.");
+        return;
+      }
+
+      // 성공 시 Q&A 목록으로 이동
       router.push("/qa");
     } catch (err) {
       console.error("질문 작성 오류:", err);
