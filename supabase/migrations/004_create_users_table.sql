@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_instagram_id ON users(instagram_id);
 
 -- updated_at 자동 업데이트 트리거
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW
@@ -18,6 +19,11 @@ CREATE TRIGGER update_users_updated_at
 
 -- RLS (Row Level Security) 정책 설정
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- 기존 정책 삭제 (중복 생성 방지)
+DROP POLICY IF EXISTS "Users are viewable by everyone" ON users;
+DROP POLICY IF EXISTS "Users can update their own profile" ON users;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON users;
 
 -- 모든 사용자가 다른 사용자의 프로필을 읽을 수 있도록 정책 설정 (선택사항)
 CREATE POLICY "Users are viewable by everyone"
@@ -45,6 +51,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- auth.users에 새 사용자가 생성될 때 트리거
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
