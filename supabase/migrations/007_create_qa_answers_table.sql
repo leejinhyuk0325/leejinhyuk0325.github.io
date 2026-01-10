@@ -15,6 +15,7 @@ CREATE INDEX IF NOT EXISTS idx_qa_answers_author_id ON qa_answers(author_id);
 CREATE INDEX IF NOT EXISTS idx_qa_answers_created_at ON qa_answers(created_at DESC);
 
 -- updated_at 자동 업데이트 트리거
+DROP TRIGGER IF EXISTS update_qa_answers_updated_at ON qa_answers;
 CREATE TRIGGER update_qa_answers_updated_at
   BEFORE UPDATE ON qa_answers
   FOR EACH ROW
@@ -22,6 +23,12 @@ CREATE TRIGGER update_qa_answers_updated_at
 
 -- RLS (Row Level Security) 정책 설정
 ALTER TABLE qa_answers ENABLE ROW LEVEL SECURITY;
+
+-- 기존 정책 삭제 (중복 생성 방지)
+DROP POLICY IF EXISTS "QA answers are viewable by everyone" ON qa_answers;
+DROP POLICY IF EXISTS "QA answers are insertable by authenticated users" ON qa_answers;
+DROP POLICY IF EXISTS "Users can update their own answers" ON qa_answers;
+DROP POLICY IF EXISTS "Users can delete their own answers" ON qa_answers;
 
 -- 모든 사용자가 답변을 읽을 수 있도록 정책 설정
 CREATE POLICY "QA answers are viewable by everyone"
