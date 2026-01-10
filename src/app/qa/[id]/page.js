@@ -1,8 +1,7 @@
 import QADetailClient from "./QADetailClient";
 
 export async function generateStaticParams() {
-  const params = [];
-  return params;
+  return [];
 }
 
 export default async function QADetailPage({ params }) {
