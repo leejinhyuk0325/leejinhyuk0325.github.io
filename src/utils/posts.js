@@ -247,11 +247,11 @@ export async function getPopularPosts() {
  */
 export async function getTodayDeadlinePosts() {
   try {
-    // 오늘 날짜 (로컬 타임존 기준, 시간 제외)
+    // 오늘 날짜 문자열 (YYYY-MM-DD 형식, 로컬 타임존 기준)
     const today = new Date();
-    const todayYear = today.getFullYear();
-    const todayMonth = today.getMonth();
-    const todayDate = today.getDate();
+    const todayStr = `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     // 모든 posts 가져오기 (category 필터 없음)
     const { data, error } = await supabase
@@ -274,24 +274,29 @@ export async function getTodayDeadlinePosts() {
         return false;
       }
 
-      // created_at을 로컬 타임존으로 변환
+      // created_at을 Date 객체로 변환 (자동으로 로컬 타임존으로 변환됨)
       const created = new Date(post.created_at);
 
-      // deadline 일수를 더한 마감일 계산
-      const deadlineDate = new Date(created);
+      // 로컬 타임존 기준으로 날짜 추출 (년, 월, 일)
+      const createdYear = created.getFullYear();
+      const createdMonth = created.getMonth();
+      const createdDay = created.getDate();
+
+      // deadline 일수를 더한 마감일 계산 (로컬 타임존 기준)
+      const deadlineDate = new Date(createdYear, createdMonth, createdDay);
       deadlineDate.setDate(deadlineDate.getDate() + post.deadline);
 
-      // 날짜만 비교 (년, 월, 일)
+      // 마감일을 YYYY-MM-DD 형식으로 변환 (로컬 타임존 기준)
       const deadlineYear = deadlineDate.getFullYear();
-      const deadlineMonth = deadlineDate.getMonth();
-      const deadlineDay = deadlineDate.getDate();
-
-      // 오늘 날짜와 비교 (timezone 고려하여 date만 비교)
-      return (
-        deadlineYear === todayYear &&
-        deadlineMonth === todayMonth &&
-        deadlineDay === todayDate
+      const deadlineMonth = String(deadlineDate.getMonth() + 1).padStart(
+        2,
+        "0"
       );
+      const deadlineDay = String(deadlineDate.getDate()).padStart(2, "0");
+      const deadlineStr = `${deadlineYear}-${deadlineMonth}-${deadlineDay}`;
+
+      // 오늘 날짜와 비교 (문자열 비교로 timezone 문제 방지)
+      return deadlineStr === todayStr;
     });
 
     // share 개수 가져오기
