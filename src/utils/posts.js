@@ -395,6 +395,11 @@ export async function addFavorite(postId, userId) {
       .single();
 
     if (error) {
+      // 테이블이 없는 경우 (404 또는 PGRST205 에러)
+      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
+        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
+        return { success: false, error: { message: "favorites 테이블이 아직 생성되지 않았습니다." } };
+      }
       console.error("관심있는 글 추가 오류:", error);
       return { success: false, error };
     }
@@ -418,6 +423,11 @@ export async function removeFavorite(postId, userId) {
       .eq("user_id", userId);
 
     if (error) {
+      // 테이블이 없는 경우 (404 또는 PGRST205 에러)
+      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
+        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
+        return { success: false, error: { message: "favorites 테이블이 아직 생성되지 않았습니다." } };
+      }
       console.error("관심있는 글 제거 오류:", error);
       return { success: false, error };
     }
@@ -445,6 +455,11 @@ export async function getUserFavorites(userId) {
       .order("created_at", { ascending: false });
 
     if (error) {
+      // 테이블이 없는 경우 (404 또는 PGRST205 에러)
+      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
+        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
+        return [];
+      }
       console.error("관심있는 글 가져오기 오류:", error);
       return [];
     }
@@ -481,6 +496,11 @@ export async function hasUserFavorited(postId, userId) {
       .maybeSingle();
 
     if (error) {
+      // 테이블이 없는 경우 (404 또는 PGRST205 에러) 조용히 false 반환
+      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
+        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
+        return false;
+      }
       console.error("관심있는 글 확인 오류:", error);
       return false;
     }
