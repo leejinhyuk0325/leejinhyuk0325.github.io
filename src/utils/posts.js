@@ -248,6 +248,40 @@ export async function searchPosts(query) {
 }
 
 /**
+ * Post 생성
+ */
+export async function createPost(postData) {
+  try {
+    const { data, error } = await supabase
+      .from("posts")
+      .insert([
+        {
+          title: postData.title,
+          deadline: postData.deadline,
+          apply: postData.apply || "신청",
+          tags: postData.tags,
+          category: postData.category,
+          intro: postData.intro,
+          requirement: postData.requirement,
+          tag_list: postData.tagList || [],
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Post 생성 오류:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Post 생성 예외:", err);
+    throw err;
+  }
+}
+
+/**
  * 모든 post ID 가져오기 (정적 생성용)
  */
 export async function getAllPostIds() {
