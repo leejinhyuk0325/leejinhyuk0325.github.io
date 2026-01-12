@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 
 export default function AuthorWritePage() {
   const [title, setTitle] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState("30");
   const [tags, setTags] = useState("");
   const [category, setCategory] = useState("deadline");
   const [intro, setIntro] = useState("");
@@ -70,10 +70,18 @@ export default function AuthorWritePage() {
         .map((tag) => tag.trim())
         .filter((tag) => tag && tag.startsWith("#"));
 
+      // deadline을 숫자로 변환
+      const deadlineDays = parseInt(deadline.trim()) || 30;
+      if (isNaN(deadlineDays) || deadlineDays < 0) {
+        setError("마감일은 0 이상의 숫자여야 합니다.");
+        setLoading(false);
+        return;
+      }
+
       // 게시글 데이터 준비
       const postData = {
         title: title.trim(),
-        deadline: deadline.trim() || "30일 남음",
+        deadline: deadlineDays,
         apply: "신청",
         tags: tags.trim() || "#작품",
         category: category,
@@ -188,17 +196,22 @@ export default function AuthorWritePage() {
                   htmlFor="deadline"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  마감일
+                  마감일 (일수)
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   id="deadline"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  placeholder="예: 30일 남음, 오늘 마감"
+                  placeholder="예: 30"
+                  min="0"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   disabled={loading}
+                  required
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  작성일로부터 마감까지의 일수를 입력하세요 (0일 = 오늘 마감)
+                </p>
               </div>
 
               <div>

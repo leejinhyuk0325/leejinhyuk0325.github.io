@@ -1,6 +1,75 @@
 import { supabase } from "./supabase";
 
 /**
+ * 마감일 계산 및 표시 형식 변환 헬퍼 함수
+ * @param {Date} createdAt - 게시글 생성일
+ * @param {number} deadlineDays - 마감까지 일수
+ * @param {string} category - 카테고리 ('popular', 'deadline', 'paid')
+ * @returns {string} - 표시할 마감일 문자열
+ */
+export function formatDeadline(createdAt, deadlineDays, category) {
+  if (!createdAt || deadlineDays === null || deadlineDays === undefined) {
+    return "마감일 정보 없음";
+  }
+
+  const created = new Date(createdAt);
+  const deadlineDate = new Date(created);
+  deadlineDate.setDate(deadlineDate.getDate() + deadlineDays);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const deadline = new Date(deadlineDate);
+  deadline.setHours(0, 0, 0, 0);
+
+  // 오늘 마감인 경우
+  if (category === "deadline") {
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return "오늘 마감";
+    } else if (diffDays < 0) {
+      return "마감됨";
+    } else {
+      return `${diffDays}일 남음`;
+    }
+  }
+
+  // 연재도전인 경우: 마감일까지 남은 일수 표시
+  if (category === "popular") {
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return "마감됨";
+    } else if (diffDays === 0) {
+      return "오늘 마감";
+    } else {
+      return `${diffDays}일 남음`;
+    }
+  }
+
+  // 유료연재코너인 경우
+  if (category === "paid") {
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return "마감됨";
+    } else if (diffDays === 0) {
+      return "오늘 마감";
+    } else {
+      return `${diffDays}일 남음`;
+    }
+  }
+
+  // 기본값
+  const diffTime = deadline - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays >= 0 ? `${diffDays}일 남음` : "마감됨";
+}
+
+/**
  * Post의 share 개수 가져오기
  */
 export async function getShareCount(postId) {
@@ -72,11 +141,16 @@ export async function getAllPosts() {
     const postIds = data.map((post) => post.id);
     const shareCounts = await getShareCounts(postIds);
 
-    // tagList를 배열로 변환하고 shareCount 추가
+    // tagList를 배열로 변환하고 shareCount 추가, deadline 표시 형식 계산
     return data.map((post) => ({
       ...post,
       tagList: post.tag_list || [],
       shareCount: shareCounts[post.id] || 0,
+      deadlineDisplay: formatDeadline(
+        post.created_at,
+        post.deadline,
+        post.category
+      ),
     }));
   } catch (err) {
     console.error("Posts 가져오기 예외:", err);
@@ -111,6 +185,11 @@ export async function getPostById(id) {
       ...data,
       tagList: data.tag_list || [],
       shareCount,
+      deadlineDisplay: formatDeadline(
+        data.created_at,
+        data.deadline,
+        data.category
+      ),
     };
   } catch (err) {
     console.error("Post 가져오기 예외:", err);
@@ -142,6 +221,11 @@ export async function getPostsByCategory(category) {
       ...post,
       tagList: post.tag_list || [],
       shareCount: shareCounts[post.id] || 0,
+      deadlineDisplay: formatDeadline(
+        post.created_at,
+        post.deadline,
+        post.category
+      ),
     }));
   } catch (err) {
     console.error("카테고리별 posts 가져오기 예외:", err);
@@ -158,9 +242,63 @@ export async function getPopularPosts() {
 
 /**
  * 오늘 마감 posts 가져오기
+ * created_at + deadline이 오늘인 것만 필터링
  */
 export async function getTodayDeadlinePosts() {
-  return getPostsByCategory("deadline");
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("category", "deadline")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("오늘 마감 posts 가져오기 오류:", error);
+      return [];
+    }
+
+    // 클라이언트 측에서 마감일이 오늘인 것만 필터링
+    const filtered = data.filter((post) => {
+      if (
+        !post.created_at ||
+        post.deadline === null ||
+        post.deadline === undefined
+      ) {
+        return false;
+      }
+
+      const created = new Date(post.created_at);
+      const deadlineDate = new Date(created);
+      deadlineDate.setDate(deadlineDate.getDate() + post.deadline);
+      deadlineDate.setHours(0, 0, 0, 0);
+
+      // 오늘 날짜와 비교
+      return deadlineDate.getTime() === today.getTime();
+    });
+
+    // share 개수 가져오기
+    const postIds = filtered.map((post) => post.id);
+    const shareCounts = await getShareCounts(postIds);
+
+    return filtered.map((post) => ({
+      ...post,
+      tagList: post.tag_list || [],
+      shareCount: shareCounts[post.id] || 0,
+      deadlineDisplay: formatDeadline(
+        post.created_at,
+        post.deadline,
+        post.category
+      ),
+    }));
+  } catch (err) {
+    console.error("오늘 마감 posts 가져오기 예외:", err);
+    return [];
+  }
 }
 
 /**
@@ -215,6 +353,11 @@ export async function searchPosts(query) {
         ...post,
         tagList: post.tag_list || [],
         shareCount: shareCounts[post.id] || 0,
+        deadlineDisplay: formatDeadline(
+          post.created_at,
+          post.deadline,
+          post.category
+        ),
       }));
     } else {
       // 일반 검색: 제목, 태그, 소개글에서 검색
@@ -239,6 +382,11 @@ export async function searchPosts(query) {
         ...post,
         tagList: post.tag_list || [],
         shareCount: shareCounts[post.id] || 0,
+        deadlineDisplay: formatDeadline(
+          post.created_at,
+          post.deadline,
+          post.category
+        ),
       }));
     }
   } catch (err) {
@@ -286,9 +434,7 @@ export async function createPost(postData) {
  */
 export async function getAllPostIds() {
   try {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("id");
+    const { data, error } = await supabase.from("posts").select("id");
 
     if (error) {
       console.error("Post IDs 가져오기 오류:", error);
@@ -383,11 +529,13 @@ export async function getUserSharedPosts(userId) {
   try {
     const { data, error } = await supabase
       .from("shares")
-      .select(`
+      .select(
+        `
         post_id,
         created_at,
         posts (*)
-      `)
+      `
+      )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -407,6 +555,11 @@ export async function getUserSharedPosts(userId) {
         tagList: share.posts.tag_list || [],
         shareCount: shareCounts[share.post_id] || 0,
         sharedAt: share.created_at,
+        deadlineDisplay: formatDeadline(
+          share.posts.created_at,
+          share.posts.deadline,
+          share.posts.category
+        ),
       }));
   } catch (err) {
     console.error("공유한 게시글 가져오기 예외:", err);
@@ -430,9 +583,18 @@ export async function addFavorite(postId, userId) {
 
     if (error) {
       // 테이블이 없는 경우 (404 또는 PGRST205 에러)
-      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
-        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
-        return { success: false, error: { message: "favorites 테이블이 아직 생성되지 않았습니다." } };
+      if (
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        error.message?.includes("Could not find the table")
+      ) {
+        console.warn(
+          "favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요."
+        );
+        return {
+          success: false,
+          error: { message: "favorites 테이블이 아직 생성되지 않았습니다." },
+        };
       }
       console.error("관심있는 글 추가 오류:", error);
       return { success: false, error };
@@ -458,9 +620,18 @@ export async function removeFavorite(postId, userId) {
 
     if (error) {
       // 테이블이 없는 경우 (404 또는 PGRST205 에러)
-      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
-        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
-        return { success: false, error: { message: "favorites 테이블이 아직 생성되지 않았습니다." } };
+      if (
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        error.message?.includes("Could not find the table")
+      ) {
+        console.warn(
+          "favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요."
+        );
+        return {
+          success: false,
+          error: { message: "favorites 테이블이 아직 생성되지 않았습니다." },
+        };
       }
       console.error("관심있는 글 제거 오류:", error);
       return { success: false, error };
@@ -480,18 +651,26 @@ export async function getUserFavorites(userId) {
   try {
     const { data, error } = await supabase
       .from("favorites")
-      .select(`
+      .select(
+        `
         post_id,
         created_at,
         posts (*)
-      `)
+      `
+      )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
       // 테이블이 없는 경우 (404 또는 PGRST205 에러)
-      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
-        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
+      if (
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        error.message?.includes("Could not find the table")
+      ) {
+        console.warn(
+          "favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요."
+        );
         return [];
       }
       console.error("관심있는 글 가져오기 오류:", error);
@@ -509,6 +688,11 @@ export async function getUserFavorites(userId) {
         tagList: fav.posts.tag_list || [],
         shareCount: shareCounts[fav.post_id] || 0,
         favoritedAt: fav.created_at,
+        deadlineDisplay: formatDeadline(
+          fav.posts.created_at,
+          fav.posts.deadline,
+          fav.posts.category
+        ),
       }));
   } catch (err) {
     console.error("관심있는 글 가져오기 예외:", err);
@@ -531,8 +715,14 @@ export async function hasUserFavorited(postId, userId) {
 
     if (error) {
       // 테이블이 없는 경우 (404 또는 PGRST205 에러) 조용히 false 반환
-      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('Could not find the table')) {
-        console.warn("favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요.");
+      if (
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        error.message?.includes("Could not find the table")
+      ) {
+        console.warn(
+          "favorites 테이블이 아직 생성되지 않았습니다. migration을 실행해주세요."
+        );
         return false;
       }
       console.error("관심있는 글 확인 오류:", error);
@@ -560,7 +750,10 @@ export async function publishToPopular(postId, userId) {
 
     if (postError || !post) {
       console.error("게시글 찾기 오류:", postError);
-      return { success: false, error: postError || new Error("게시글을 찾을 수 없습니다.") };
+      return {
+        success: false,
+        error: postError || new Error("게시글을 찾을 수 없습니다."),
+      };
     }
 
     // 카테고리를 popular로 변경
@@ -582,4 +775,3 @@ export async function publishToPopular(postId, userId) {
     return { success: false, error: err };
   }
 }
-

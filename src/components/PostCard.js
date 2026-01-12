@@ -58,7 +58,7 @@ export default function PostCard({ post, variant = "default" }) {
       <Link href={`/detail/${post.id}`} className="block cursor-pointer">
         <div className="flex items-center justify-between mb-4">
           <span className={`text-sm font-medium ${deadlineColors[variant]}`}>
-            {post.deadline}
+            {post.deadlineDisplay || post.deadline}
           </span>
           <div className="flex items-center space-x-2">
             <span

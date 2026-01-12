@@ -429,7 +429,9 @@ export default function DetailContent({ post, tagList }) {
                       ? "오늘 마감"
                       : "유료연재"}
                   </span>
-                  <span className="text-sm text-gray-500">{post.deadline}</span>
+                  <span className="text-sm text-gray-500">
+                    {post.deadlineDisplay || post.deadline}
+                  </span>
                 </div>
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <h1 className="text-3xl font-bold text-gray-900 flex-1">
