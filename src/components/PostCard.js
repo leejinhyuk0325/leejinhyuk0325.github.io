@@ -10,21 +10,21 @@ export default function PostCard({ post, variant = "default" }) {
   const [shareCount, setShareCount] = useState(post.shareCount || 0);
 
   const variantStyles = {
-    default: "bg-white",
-    urgent: "bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200",
-    paid: "bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200",
+    default: "bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 border border-emerald-200/50",
+    urgent: "bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 border border-rose-200/50",
+    paid: "bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border border-amber-200/50",
   };
 
   const deadlineColors = {
-    default: "text-red-600",
-    urgent: "text-blue-600",
-    paid: "text-purple-600",
+    default: "text-emerald-700 font-semibold",
+    urgent: "text-rose-700 font-semibold",
+    paid: "text-amber-700 font-semibold",
   };
 
   const badgeColors = {
-    default: "bg-blue-100 text-blue-800",
-    urgent: "bg-blue-100 text-blue-800",
-    paid: "bg-purple-100 text-purple-800",
+    default: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm",
+    urgent: "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm",
+    paid: "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm",
   };
 
   const tagList =

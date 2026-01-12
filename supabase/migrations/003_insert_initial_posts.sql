@@ -120,3 +120,9 @@ INSERT INTO posts (id, title, deadline, apply, tags, category, intro, requiremen
 손님들의 소원을 들어주는 마법 아이템들이 준비되어 있습니다. 판타지와 경영이 만나는 작품입니다.', '9공유', ARRAY['#마법', '#가게', '#판타지'])
 ON CONFLICT (id) DO NOTHING;
 
+-- 시퀀스를 최신 ID로 업데이트 (명시적으로 ID를 지정했기 때문에 시퀀스가 업데이트되지 않았을 수 있음)
+SELECT setval(
+  pg_get_serial_sequence('public.posts', 'id'),
+  COALESCE((SELECT MAX(id) FROM public.posts), 1),
+  true
+);

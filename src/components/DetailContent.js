@@ -415,12 +415,12 @@ export default function DetailContent({ post, tagList }) {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <span
-                    className={`text-sm font-medium px-3 py-1 rounded-full ${
+                    className={`text-sm font-semibold px-4 py-1.5 rounded-full shadow-sm ${
                       post.category === "popular"
-                        ? "bg-red-100 text-red-700"
+                        ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
                         : post.category === "deadline"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-purple-100 text-purple-700"
+                        ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
+                        : "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
                     }`}
                   >
                     {post.category === "popular"
