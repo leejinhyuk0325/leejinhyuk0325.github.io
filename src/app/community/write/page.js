@@ -94,9 +94,8 @@ export default function CommunityWritePage() {
       const newPost = await createCommunityPost(postData);
 
       if (newPost) {
-        // 성공 시 커뮤니티 목록으로 이동
+        // 성공 시 커뮤니티 목록으로 이동 (클라이언트 컴포넌트이므로 자동으로 새 데이터 로드됨)
         router.push("/community");
-        router.refresh();
       } else {
         setError("글 작성에 실패했습니다. 다시 시도해주세요.");
       }

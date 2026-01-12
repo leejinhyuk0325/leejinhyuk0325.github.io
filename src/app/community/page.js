@@ -1,19 +1,55 @@
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import {
-  getCommunityCategories,
-  getCommunityPosts,
-} from "@/utils/community";
+import { getCommunityCategories, getCommunityPosts } from "@/utils/community";
 
-export default async function CommunityPage({
-  searchParams,
-}) {
-  const categoryId = searchParams?.category || "all";
-  const [categories, posts] = await Promise.all([
-    getCommunityCategories(),
-    getCommunityPosts(categoryId),
-  ]);
+function CommunityContent() {
+  const searchParams = useSearchParams();
+  const categoryId = searchParams?.get("category") || "all";
+  const [categories, setCategories] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [categoriesData, postsData] = await Promise.all([
+          getCommunityCategories(),
+          getCommunityPosts(categoryId),
+        ]);
+        setCategories(categoriesData);
+        setPosts(postsData);
+      } catch (error) {
+        console.error("데이터 로드 오류:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [categoryId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">로딩 중...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,23 +77,31 @@ export default async function CommunityPage({
                   return (
                     <li key={category.id}>
                       <Link
-                        href={`/community${category.id === "all" ? "" : `?category=${category.id}`}`}
+                        href={`/community${
+                          category.id === "all"
+                            ? ""
+                            : `?category=${category.id}`
+                        }`}
                         className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors group ${
                           isActive
                             ? "bg-blue-50 text-blue-700"
                             : "hover:bg-gray-100 text-gray-700"
                         }`}
                       >
-                        <span className={`text-sm group-hover:text-gray-900 ${
-                          isActive ? "font-semibold" : ""
-                        }`}>
+                        <span
+                          className={`text-sm group-hover:text-gray-900 ${
+                            isActive ? "font-semibold" : ""
+                          }`}
+                        >
                           {category.name}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          isActive
-                            ? "bg-blue-200 text-blue-700"
-                            : "bg-gray-200 text-gray-500"
-                        }`}>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            isActive
+                              ? "bg-blue-200 text-blue-700"
+                              : "bg-gray-200 text-gray-500"
+                          }`}
+                        >
                           {category.count}
                         </span>
                       </Link>
@@ -201,3 +245,25 @@ export default async function CommunityPage({
   );
 }
 
+export default function CommunityPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">로딩 중...</p>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      }
+    >
+      <CommunityContent />
+    </Suspense>
+  );
+}

@@ -59,3 +59,10 @@ ON CONFLICT (id) DO UPDATE SET
   comments = EXCLUDED.comments,
   is_hot = EXCLUDED.is_hot,
   created_at = EXCLUDED.created_at;
+
+-- 시퀀스를 최신 ID로 업데이트 (명시적으로 ID를 지정했기 때문에 시퀀스가 업데이트되지 않았을 수 있음)
+SELECT setval(
+  pg_get_serial_sequence('public.community_posts', 'id'),
+  COALESCE((SELECT MAX(id) FROM public.community_posts), 1),
+  true
+);
