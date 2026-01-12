@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import { supabase } from "@/utils/supabase";
 import {
   addShare,
@@ -148,7 +148,7 @@ export default function DetailContent({ post, tagList }) {
               if (!colorValue || typeof colorValue !== "string") {
                 return colorValue;
               }
-              
+
               // lab(), oklab(), lch() 색상이 포함된 경우 제거
               if (
                 colorValue.includes("lab(") ||
@@ -159,7 +159,7 @@ export default function DetailContent({ post, tagList }) {
               ) {
                 return null; // null을 반환하면 해당 속성을 설정하지 않음
               }
-              
+
               return colorValue;
             };
 
@@ -183,7 +183,7 @@ export default function DetailContent({ post, tagList }) {
             // 모든 요소의 인라인 스타일에서 lab() 색상 제거
             const removeLabColorsFromStyles = (element) => {
               if (!element || !element.style) return;
-              
+
               try {
                 // 모든 인라인 스타일 속성 검사
                 const style = element.style;
