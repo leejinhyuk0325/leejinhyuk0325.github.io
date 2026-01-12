@@ -102,6 +102,60 @@ export async function getCommunityPosts(categoryId = "all") {
 }
 
 /**
+ * 커뮤니티 게시글 ID로 가져오기
+ */
+export async function getCommunityPostById(id) {
+  try {
+    const { data, error } = await supabase
+      .from("community_posts")
+      .select(`
+        *,
+        community_categories (
+          id,
+          name
+        )
+      `)
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("커뮤니티 게시글 가져오기 오류:", error);
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    // 조회수 증가
+    await supabase
+      .from("community_posts")
+      .update({ views: (data.views || 0) + 1 })
+      .eq("id", id);
+
+    // 데이터 포맷팅
+    return {
+      id: data.id,
+      category: data.community_categories?.name || "",
+      categoryId: data.category_id,
+      title: data.title,
+      author: data.author,
+      content: data.content || "",
+      date: new Date(data.created_at).toISOString().split("T")[0],
+      views: (data.views || 0) + 1,
+      likes: data.likes || 0,
+      comments: data.comments || 0,
+      isHot: data.is_hot || false,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+  } catch (err) {
+    console.error("커뮤니티 게시글 가져오기 예외:", err);
+    return null;
+  }
+}
+
+/**
  * 커뮤니티 게시글 검색
  */
 export async function searchCommunityPosts(searchQuery, searchType = "title") {
