@@ -1,25 +1,85 @@
-import {
-  getCommunityPostById,
-  getAllCommunityPostIds,
-} from "@/utils/community";
-import { notFound } from "next/navigation";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getCommunityPostById } from "@/utils/community";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 
-export async function generateStaticParams() {
-  const postIds = await getAllCommunityPostIds();
-  return postIds.map((id) => ({
-    id: id.toString(),
-  }));
-}
+export default function CommunityPostPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params?.id;
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-export default async function CommunityPostPage({ params }) {
-  const { id } = await params;
-  const post = await getCommunityPostById(id);
+  useEffect(() => {
+    const loadPost = async () => {
+      if (!id) {
+        setError("게시글 ID가 없습니다.");
+        setLoading(false);
+        return;
+      }
 
-  if (!post) {
-    notFound();
+      try {
+        setLoading(true);
+        const postData = await getCommunityPostById(id);
+        if (postData) {
+          setPost(postData);
+        } else {
+          setError("게시글을 찾을 수 없습니다.");
+        }
+      } catch (err) {
+        console.error("게시글 로드 오류:", err);
+        setError("게시글을 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPost();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">로딩 중...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">404</h1>
+            <p className="text-gray-600 mb-6">
+              {error || "게시글을 찾을 수 없습니다."}
+            </p>
+            <Link
+              href="/community"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              커뮤니티 목록으로
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
