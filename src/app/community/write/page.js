@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
+import { createCommunityPost } from "@/utils/community";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -61,13 +62,49 @@ export default function CommunityWritePage() {
         return;
       }
 
-      // TODO: 실제 데이터베이스에 저장하는 로직 구현 필요
-      // 현재는 임시로 alert만 표시
-      alert("글이 작성되었습니다! (데이터베이스 연동 필요)");
-      router.push("/community");
+      // 사용자 이름 가져오기
+      const userName =
+        session.user.user_metadata?.full_name ||
+        session.user.user_metadata?.name ||
+        session.user.email?.split("@")[0] ||
+        "익명";
+
+      // 게시글 데이터 준비
+      const postData = {
+        categoryId: category,
+        title: title.trim(),
+        author: userName,
+        content: content.trim(),
+      };
+
+      // 유효성 검사
+      if (!postData.title) {
+        setError("제목을 입력해주세요.");
+        setLoading(false);
+        return;
+      }
+
+      if (!postData.content) {
+        setError("내용을 입력해주세요.");
+        setLoading(false);
+        return;
+      }
+
+      // Supabase에 게시글 저장
+      const newPost = await createCommunityPost(postData);
+
+      if (newPost) {
+        // 성공 시 커뮤니티 목록으로 이동
+        router.push("/community");
+        router.refresh();
+      } else {
+        setError("글 작성에 실패했습니다. 다시 시도해주세요.");
+      }
     } catch (err) {
       console.error("글 작성 오류:", err);
-      setError(err.message || "글 작성에 실패했습니다. 다시 시도해주세요.");
+      setError(
+        err.message || "글 작성에 실패했습니다. 다시 시도해주세요."
+      );
     } finally {
       setLoading(false);
     }

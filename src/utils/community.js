@@ -177,6 +177,40 @@ export async function getCommunityPostById(id) {
 }
 
 /**
+ * 커뮤니티 게시글 생성
+ */
+export async function createCommunityPost(postData) {
+  try {
+    const { data, error } = await supabase
+      .from("community_posts")
+      .insert([
+        {
+          category_id: postData.categoryId,
+          title: postData.title,
+          author: postData.author,
+          content: postData.content,
+          views: 0,
+          likes: 0,
+          comments: 0,
+          is_hot: false,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("커뮤니티 게시글 생성 오류:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("커뮤니티 게시글 생성 예외:", err);
+    throw err;
+  }
+}
+
+/**
  * 커뮤니티 게시글 검색
  */
 export async function searchCommunityPosts(searchQuery, searchType = "title") {
