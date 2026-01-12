@@ -1,7 +1,6 @@
 1:"$Sreact.fragment"
-2:I[78933,["/_next/static/chunks/e9792668b80f646a.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/c01d7ee0c5f59640.js"],"default"]
-3:I[48382,["/_next/static/chunks/e9792668b80f646a.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/c01d7ee0c5f59640.js"],"default"]
-4:I[97367,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
-5:"$Sreact.suspense"
-0:{"buildId":"SvhCM__VcVOwupQhmCwGw","rsc":["$","$1","c",{"children":[["$","div",null,{"className":"min-h-screen bg-gray-50","children":[["$","$L2",null,{}],["$","$L3",null,{"post":{"id":11,"title":"도시의 그림자","deadline":"18일 남음","apply":"신청","tags":"#느와르 #범죄 #스릴러","category":"popular","intro":"도시의 어둠 속에서 벌어지는 범죄와 정의의 이야기.\r\n\r\n밤이 되면 도시는 다른 얼굴을 보여줍니다. 그림자 속에서 진실을 찾는 탐정의 이야기입니다. 누가 진짜 범인일까요?","requirement":"60공유","tag_list":["#느와르","#범죄","#스릴러"],"created_at":"2026-01-07T02:25:06.479584+00:00","updated_at":"2026-01-07T02:25:06.479584+00:00","tagList":["#느와르","#범죄","#스릴러"],"shareCount":0},"tagList":["#느와르","#범죄","#스릴러"]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/e9792668b80f646a.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/9a4cb47a3cce1582.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/c01d7ee0c5f59640.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"loading":null,"isPartial":false}
-6:null
+2:I[15987,["/_next/static/chunks/0a0927fbf5bf76f5.js","/_next/static/chunks/9a4cb47a3cce1582.js","/_next/static/chunks/5ebc04f544301b61.js"],"default"]
+3:I[97367,["/_next/static/chunks/ff1a16fafef87110.js","/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"buildId":"wYUWONjjSilOaudo0vOXU","rsc":["$","$1","c",{"children":[["$","$L2",null,{}],[["$","script","script-0",{"src":"/_next/static/chunks/0a0927fbf5bf76f5.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/9a4cb47a3cce1582.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/5ebc04f544301b61.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"loading":null,"isPartial":false}
+5:null
