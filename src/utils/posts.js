@@ -242,19 +242,21 @@ export async function getPopularPosts() {
 
 /**
  * 오늘 마감 posts 가져오기
- * created_at + deadline이 오늘인 것만 필터링
+ * category와 상관없이 created_at + deadline이 오늘인 것만 필터링
+ * timezone을 고려하여 date만 비교
  */
 export async function getTodayDeadlinePosts() {
   try {
+    // 오늘 날짜 (로컬 타임존 기준, 시간 제외)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    const todayDate = today.getDate();
 
+    // 모든 posts 가져오기 (category 필터 없음)
     const { data, error } = await supabase
       .from("posts")
       .select("*")
-      .eq("category", "deadline")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -272,13 +274,24 @@ export async function getTodayDeadlinePosts() {
         return false;
       }
 
+      // created_at을 로컬 타임존으로 변환
       const created = new Date(post.created_at);
+
+      // deadline 일수를 더한 마감일 계산
       const deadlineDate = new Date(created);
       deadlineDate.setDate(deadlineDate.getDate() + post.deadline);
-      deadlineDate.setHours(0, 0, 0, 0);
 
-      // 오늘 날짜와 비교
-      return deadlineDate.getTime() === today.getTime();
+      // 날짜만 비교 (년, 월, 일)
+      const deadlineYear = deadlineDate.getFullYear();
+      const deadlineMonth = deadlineDate.getMonth();
+      const deadlineDay = deadlineDate.getDate();
+
+      // 오늘 날짜와 비교 (timezone 고려하여 date만 비교)
+      return (
+        deadlineYear === todayYear &&
+        deadlineMonth === todayMonth &&
+        deadlineDay === todayDate
+      );
     });
 
     // share 개수 가져오기

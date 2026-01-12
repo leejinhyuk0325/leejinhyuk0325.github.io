@@ -11,7 +11,7 @@ export default function AuthorWritePage() {
   const [title, setTitle] = useState("");
   const [deadline, setDeadline] = useState("30");
   const [tags, setTags] = useState("");
-  const [category, setCategory] = useState("deadline");
+  const [category, setCategory] = useState("popular");
   const [intro, setIntro] = useState("");
   const [requirement, setRequirement] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,6 @@ export default function AuthorWritePage() {
   const router = useRouter();
 
   const categories = [
-    { id: "deadline", name: "오늘 마감" },
     { id: "paid", name: "유료연재코너" },
     { id: "popular", name: "연재도전" },
   ];
