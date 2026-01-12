@@ -139,7 +139,30 @@ export default function DetailContent({ post, tagList }) {
           scale: 2, // 고해상도
           logging: false,
           useCORS: true,
+          allowTaint: false,
+          removeContainer: true,
+          imageTimeout: 0,
           onclone: (clonedDoc, clonedElement) => {
+            // lab() 색상을 안전한 색상으로 변환하는 헬퍼 함수
+            const sanitizeColor = (colorValue) => {
+              if (!colorValue || typeof colorValue !== "string") {
+                return colorValue;
+              }
+              
+              // lab(), oklab(), lch() 색상이 포함된 경우 제거
+              if (
+                colorValue.includes("lab(") ||
+                colorValue.includes("oklab(") ||
+                colorValue.includes("lch(") ||
+                colorValue.includes("color-mix(") ||
+                colorValue.includes("light-dark(")
+              ) {
+                return null; // null을 반환하면 해당 속성을 설정하지 않음
+              }
+              
+              return colorValue;
+            };
+
             // 모든 <style> 태그와 <link rel="stylesheet"> 태그 제거
             try {
               const styleTags = clonedDoc.querySelectorAll("style");
@@ -157,22 +180,60 @@ export default function DetailContent({ post, tagList }) {
               console.warn("스타일 태그 제거 실패:", e);
             }
 
+            // 모든 요소의 인라인 스타일에서 lab() 색상 제거
+            const removeLabColorsFromStyles = (element) => {
+              if (!element || !element.style) return;
+              
+              try {
+                // 모든 인라인 스타일 속성 검사
+                const style = element.style;
+                const colorProperties = [
+                  "color",
+                  "backgroundColor",
+                  "background-color",
+                  "borderColor",
+                  "border-color",
+                  "borderTopColor",
+                  "border-top-color",
+                  "borderRightColor",
+                  "border-right-color",
+                  "borderBottomColor",
+                  "border-bottom-color",
+                  "borderLeftColor",
+                  "border-left-color",
+                  "outlineColor",
+                  "outline-color",
+                  "textDecorationColor",
+                  "text-decoration-color",
+                ];
+
+                colorProperties.forEach((prop) => {
+                  try {
+                    const value = style.getPropertyValue(prop);
+                    if (value && sanitizeColor(value) === null) {
+                      style.removeProperty(prop);
+                    }
+                  } catch (e) {
+                    // 무시
+                  }
+                });
+              } catch (e) {
+                // 무시
+              }
+            };
+
             // 모든 요소에 계산된 스타일을 인라인으로 적용
             const walkElements = (clonedEl, originalEl) => {
               if (!clonedEl || !originalEl) return;
 
+              // 먼저 인라인 스타일에서 lab() 색상 제거
+              removeLabColorsFromStyles(clonedEl);
+
               try {
                 const originalStyle = window.getComputedStyle(originalEl);
 
-                // 모든 중요한 스타일 속성을 인라인으로 적용
-                const styleProperties = [
-                  "color",
-                  "backgroundColor",
-                  "borderColor",
-                  "borderTopColor",
-                  "borderRightColor",
-                  "borderBottomColor",
-                  "borderLeftColor",
+                // 색상이 아닌 속성들
+                const nonColorProperties = [
                   "borderWidth",
                   "borderTopWidth",
                   "borderRightWidth",
@@ -211,7 +272,7 @@ export default function DetailContent({ post, tagList }) {
                   "maxHeight",
                 ];
 
-                styleProperties.forEach((prop) => {
+                nonColorProperties.forEach((prop) => {
                   try {
                     const computedValue = originalStyle[prop];
                     if (
@@ -219,28 +280,21 @@ export default function DetailContent({ post, tagList }) {
                       computedValue !== "none" &&
                       computedValue !== "auto"
                     ) {
-                      // lab() 색상이 포함되지 않은 경우에만 적용
-                      if (
-                        !computedValue.includes("lab(") &&
-                        !computedValue.includes("oklab(") &&
-                        !computedValue.includes("lch(")
-                      ) {
-                        const cssProp = prop
-                          .replace(/([A-Z])/g, "-$1")
-                          .toLowerCase();
-                        clonedEl.style.setProperty(
-                          cssProp,
-                          computedValue,
-                          "important"
-                        );
-                      }
+                      const cssProp = prop
+                        .replace(/([A-Z])/g, "-$1")
+                        .toLowerCase();
+                      clonedEl.style.setProperty(
+                        cssProp,
+                        computedValue,
+                        "important"
+                      );
                     }
                   } catch (e) {
                     // 개별 속성 변환 실패 무시
                   }
                 });
 
-                // 색상 속성은 별도로 처리 (lab() 색상이 있을 수 있으므로)
+                // 색상 속성은 별도로 처리 (lab() 색상 필터링)
                 const colorProperties = [
                   "color",
                   "backgroundColor",
@@ -257,19 +311,19 @@ export default function DetailContent({ post, tagList }) {
                     if (
                       computedValue &&
                       computedValue !== "transparent" &&
-                      computedValue !== "rgba(0, 0, 0, 0)" &&
-                      !computedValue.includes("lab(") &&
-                      !computedValue.includes("oklab(") &&
-                      !computedValue.includes("lch(")
+                      computedValue !== "rgba(0, 0, 0, 0)"
                     ) {
-                      const cssProp = prop
-                        .replace(/([A-Z])/g, "-$1")
-                        .toLowerCase();
-                      clonedEl.style.setProperty(
-                        cssProp,
-                        computedValue,
-                        "important"
-                      );
+                      const sanitizedValue = sanitizeColor(computedValue);
+                      if (sanitizedValue) {
+                        const cssProp = prop
+                          .replace(/([A-Z])/g, "-$1")
+                          .toLowerCase();
+                        clonedEl.style.setProperty(
+                          cssProp,
+                          sanitizedValue,
+                          "important"
+                        );
+                      }
                     }
                   } catch (e) {
                     // 개별 속성 변환 실패 무시
