@@ -1,8 +1,18 @@
-import { getCommunityPostById } from "@/utils/community";
+import {
+  getCommunityPostById,
+  getAllCommunityPostIds,
+} from "@/utils/community";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+
+export async function generateStaticParams() {
+  const postIds = await getAllCommunityPostIds();
+  return postIds.map((id) => ({
+    id: id.toString(),
+  }));
+}
 
 export default async function CommunityPostPage({ params }) {
   const { id } = await params;

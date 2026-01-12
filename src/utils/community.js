@@ -102,6 +102,27 @@ export async function getCommunityPosts(categoryId = "all") {
 }
 
 /**
+ * 모든 커뮤니티 게시글 ID 가져오기 (정적 생성용)
+ */
+export async function getAllCommunityPostIds() {
+  try {
+    const { data, error } = await supabase
+      .from("community_posts")
+      .select("id");
+
+    if (error) {
+      console.error("커뮤니티 게시글 IDs 가져오기 오류:", error);
+      return [];
+    }
+
+    return data.map((post) => post.id);
+  } catch (err) {
+    console.error("커뮤니티 게시글 IDs 가져오기 예외:", err);
+    return [];
+  }
+}
+
+/**
  * 커뮤니티 게시글 ID로 가져오기
  */
 export async function getCommunityPostById(id) {
