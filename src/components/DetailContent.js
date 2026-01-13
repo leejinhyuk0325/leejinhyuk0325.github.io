@@ -578,7 +578,7 @@ export default function DetailContent({ post, tagList }) {
           onClick={handleApplyClick}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-lg"
         >
-          TASTE 신청하기
+          공유하기
         </button>
       </main>
 
