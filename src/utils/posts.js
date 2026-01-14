@@ -173,6 +173,45 @@ export async function getAllPosts() {
 }
 
 /**
+ * 특정 작가(author_id)의 posts 가져오기
+ */
+export async function getPostsByAuthor(authorId) {
+  try {
+    if (!authorId) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("serials")
+      .select("*")
+      .eq("author_id", authorId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("작가별 Posts 가져오기 오류:", error);
+      return [];
+    }
+
+    const serialIds = data.map((serial) => serial.id);
+    const shareCounts = await getShareCounts(serialIds);
+
+    return data.map((post) => ({
+      ...post,
+      tagList: post.tag_list || [],
+      shareCount: shareCounts[post.id] || 0,
+      deadlineDisplay: formatDeadline(
+        post.created_at,
+        post.deadline,
+        post.category
+      ),
+    }));
+  } catch (err) {
+    console.error("작가별 Posts 가져오기 예외:", err);
+    return [];
+  }
+}
+
+/**
  * ID로 post 가져오기
  */
 export async function getPostById(id) {

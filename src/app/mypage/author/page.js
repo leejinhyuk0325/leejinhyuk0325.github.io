@@ -6,7 +6,7 @@ import { supabase } from "@/utils/supabase";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PostCard from "@/components/PostCard";
-import { publishToPopular, getAllPosts } from "@/utils/posts";
+import { publishToPopular, getAllPosts, getPostsByAuthor } from "@/utils/posts";
 import Link from "next/link";
 
 export default function AuthorPage() {
@@ -75,11 +75,9 @@ export default function AuthorPage() {
     setLoadingPosts(true);
     try {
       if (activeTab === "my") {
-        // 내가 작성한 게시글 가져오기 (현재는 모든 게시글에서 필터링)
-        // 실제로는 posts 테이블에 author_id 컬럼이 있어야 함
-        const all = await getAllPosts();
-        // 임시로 모든 게시글을 표시 (나중에 author_id로 필터링 가능)
-        setMyPosts(all);
+        // 내가 작성한 게시글만 가져오기 (author_id 기준)
+        const mine = await getPostsByAuthor(user.id);
+        setMyPosts(mine);
       } else {
         // 인기글 목록 가져오기
         const all = await getAllPosts();
