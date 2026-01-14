@@ -82,9 +82,7 @@ CREATE POLICY "Shares are viewable by everyone"
 -- 인증된 사용자만 자신의 share를 삽입할 수 있도록 정책 설정
 CREATE POLICY "Users can insert their own shares"
   ON shares FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- 인증된 사용자만 자신의 share를 삭제할 수 있도록 정책 설정
+  WITH CHECK (auth.uid() = user_id);-- 인증된 사용자만 자신의 share를 삭제할 수 있도록 정책 설정
 CREATE POLICY "Users can delete their own shares"
   ON shares FOR DELETE
   USING (auth.uid() = user_id);

@@ -22,6 +22,8 @@ export default function DetailContent({ post, tagList }) {
   const [shareCount, setShareCount] = useState(post.shareCount || 0);
   const [isFavorited, setIsFavorited] = useState(false);
   const [checkingFavorite, setCheckingFavorite] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [checkingUser, setCheckingUser] = useState(true);
   const captureAreaRef = useRef(null);
 
   // 컴포넌트 마운트 시 최신 공유 수 가져오기
@@ -37,6 +39,27 @@ export default function DetailContent({ post, tagList }) {
 
     fetchLatestShareCount();
   }, [post.id]);
+
+  // 현재 사용자 확인
+  useEffect(() => {
+    const checkCurrentUser = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session) {
+          setCurrentUserId(session.user.id);
+        }
+      } catch (error) {
+        console.error("사용자 확인 실패:", error);
+      } finally {
+        setCheckingUser(false);
+      }
+    };
+
+    checkCurrentUser();
+  }, []);
 
   // 관심있는 글 상태 확인
   useEffect(() => {
@@ -404,6 +427,30 @@ export default function DetailContent({ post, tagList }) {
     setCapturedImage(null);
   };
 
+  // 공유 조건 파싱 함수
+  const parseRequirement = (requirement) => {
+    if (!requirement) return null;
+    // "30공유", "50 공유", "100공유" 등의 형식에서 숫자 추출
+    const match = requirement.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  };
+
+  // 공유 조건 달성 여부 확인
+  const isRequirementMet = () => {
+    const requiredShareCount = parseRequirement(post.requirement);
+    if (requiredShareCount === null) return false;
+    return shareCount >= requiredShareCount;
+  };
+
+  // 작성자인지 확인
+  const isAuthor = () => {
+    if (!currentUserId || !post.author_id) return false;
+    return currentUserId === post.author_id;
+  };
+
+  const requirementMet = isRequirementMet();
+  const showWriteButton = !checkingUser && isAuthor() && requirementMet;
+
   return (
     <>
       {/* Main Content */}
@@ -580,6 +627,29 @@ export default function DetailContent({ post, tagList }) {
         >
           공유하기
         </button>
+
+        {/* 글쓰기 버튼 - 공유 조건 달성 시 작성자에게만 표시 */}
+        {showWriteButton && (
+          <Link
+            href="/mypage/author/write"
+            className="w-full mt-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-lg flex items-center justify-center gap-2"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            글쓰기
+          </Link>
+        )}
       </main>
 
       {/* Modal */}

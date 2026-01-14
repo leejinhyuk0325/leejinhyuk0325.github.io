@@ -418,6 +418,11 @@ export async function searchPosts(query) {
  */
 export async function createPost(postData) {
   try {
+    // 현재 사용자 세션 가져오기
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const { data, error } = await supabase
       .from("posts")
       .insert([
@@ -430,6 +435,7 @@ export async function createPost(postData) {
           intro: postData.intro,
           requirement: postData.requirement,
           tag_list: postData.tagList || [],
+          author_id: session?.user?.id || null,
         },
       ])
       .select()
