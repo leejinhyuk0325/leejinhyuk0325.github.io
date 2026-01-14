@@ -13,7 +13,7 @@ export default function AuthorWritePage() {
   const [tags, setTags] = useState("");
   const [category, setCategory] = useState("popular");
   const [intro, setIntro] = useState("");
-  const [requirement, setRequirement] = useState("");
+  const [requirement, setRequirement] = useState("30");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -85,7 +85,7 @@ export default function AuthorWritePage() {
         tags: tags.trim() || "#작품",
         category: category,
         intro: intro.trim(),
-        requirement: requirement.trim() || "30공유",
+        requirement: parseInt(requirement.trim()) || 30,
         tagList: tagList.length > 0 ? tagList : ["#작품"],
       };
 
@@ -221,14 +221,19 @@ export default function AuthorWritePage() {
                   공유 조건
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   id="requirement"
                   value={requirement}
                   onChange={(e) => setRequirement(e.target.value)}
-                  placeholder="예: 30공유"
+                  placeholder="예: 30"
+                  min="0"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   disabled={loading}
+                  required
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  필요한 공유 개수를 숫자로 입력하세요
+                </p>
               </div>
             </div>
 

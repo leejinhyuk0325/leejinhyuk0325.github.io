@@ -348,15 +348,16 @@ export async function getSerialPosts() {
 }
 
 /**
- * 공유 조건 파싱 함수
- * @param {string} requirement - 공유 조건 문자열 (예: "30공유")
+ * 공유 조건 가져오기 (requirement는 이제 INTEGER)
+ * @param {number} requirement - 공유 조건 숫자
  * @returns {number|null} - 필요한 공유 개수 또는 null
  */
 export function parseRequirement(requirement) {
-  if (!requirement) return null;
-  // "30공유", "50 공유", "100공유" 등의 형식에서 숫자 추출
-  const match = requirement.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
+  if (requirement === null || requirement === undefined) return null;
+  // requirement가 이미 숫자이므로 그대로 반환
+  return typeof requirement === "number"
+    ? requirement
+    : parseInt(requirement, 10) || null;
 }
 
 /**
@@ -376,9 +377,9 @@ export async function movePopularToSerial() {
 
     // 각 게시글의 공유 조건 확인
     for (const post of popularPosts) {
-      const requiredShareCount = parseRequirement(post.requirement);
+      const requiredShareCount = post.requirement;
 
-      if (requiredShareCount === null) {
+      if (requiredShareCount === null || requiredShareCount === undefined) {
         continue; // 공유 조건이 없으면 스킵
       }
 

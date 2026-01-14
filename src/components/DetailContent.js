@@ -427,18 +427,10 @@ export default function DetailContent({ post, tagList }) {
     setCapturedImage(null);
   };
 
-  // 공유 조건 파싱 함수
-  const parseRequirement = (requirement) => {
-    if (!requirement) return null;
-    // "30공유", "50 공유", "100공유" 등의 형식에서 숫자 추출
-    const match = requirement.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : null;
-  };
-
-  // 공유 조건 달성 여부 확인
+  // 공유 조건 달성 여부 확인 (requirement는 이제 INTEGER)
   const isRequirementMet = () => {
-    const requiredShareCount = parseRequirement(post.requirement);
-    if (requiredShareCount === null) return false;
+    const requiredShareCount = post.requirement;
+    if (requiredShareCount === null || requiredShareCount === undefined) return false;
     return shareCount >= requiredShareCount;
   };
 
@@ -546,7 +538,7 @@ export default function DetailContent({ post, tagList }) {
                     연재 시작 조건
                   </p>
                   <p className="text-lg font-bold text-blue-600">
-                    {post.requirement}
+                    {post.requirement}공유
                   </p>
                 </div>
               </div>
