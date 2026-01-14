@@ -1043,29 +1043,96 @@ export async function getPostByPostId(postId) {
 }
 
 /**
- * 개별 글(post) 삭제
- * 작성자(author_id)가 일치하는 경우에만 삭제
+ * 관리자 이메일 체크
  */
-export async function deletePost(postId, userId) {
+export function isAdminEmail(email) {
+  const adminEmails = ["tightend01@naver.com"];
+  return adminEmails.includes(email?.toLowerCase());
+}
+
+/**
+ * 개별 글(post) 삭제
+ * 작성자(author_id)가 일치하거나 관리자인 경우 삭제 가능
+ */
+export async function deletePost(postId, userId, userEmail) {
   try {
     if (!postId || !userId) {
       return { success: false, error: new Error("잘못된 요청입니다.") };
     }
 
-    const { error } = await supabase
+    const isAdmin = isAdminEmail(userEmail);
+
+    // 관리자는 author_id 체크 없이 삭제 가능
+    if (isAdmin) {
+      const { error } = await supabase.from("posts").delete().eq("id", postId);
+
+      if (error) {
+        console.error("글 삭제 오류:", error);
+        return { success: false, error };
+      }
+
+      return { success: true };
+    } else {
+      // 일반 사용자는 작성자만 삭제 가능
+      const { error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", postId)
+        .eq("author_id", userId);
+
+      if (error) {
+        console.error("글 삭제 오류:", error);
+        return { success: false, error };
+      }
+
+      return { success: true };
+    }
+  } catch (err) {
+    console.error("글 삭제 예외:", err);
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * 연재(serial) 삭제
+ * 관리자만 삭제 가능
+ */
+export async function deleteSerial(serialId, userEmail) {
+  try {
+    if (!serialId) {
+      return { success: false, error: new Error("잘못된 요청입니다.") };
+    }
+
+    // 관리자 체크
+    if (!isAdminEmail(userEmail)) {
+      return {
+        success: false,
+        error: new Error("관리자만 연재를 삭제할 수 있습니다."),
+      };
+    }
+
+    // 연재에 속한 모든 글(posts) 삭제
+    const { error: postsError } = await supabase
       .from("posts")
       .delete()
-      .eq("id", postId)
-      .eq("author_id", userId);
+      .eq("serial_id", serialId);
+
+    if (postsError) {
+      console.error("연재 글 삭제 오류:", postsError);
+      // 글 삭제 실패해도 연재 삭제는 계속 진행
+    }
+
+    // 연재(serial) 삭제
+    const { error } = await supabase.from("serials").delete().eq("id", serialId);
 
     if (error) {
-      console.error("글 삭제 오류:", error);
+      console.error("연재 삭제 오류:", error);
       return { success: false, error };
     }
 
     return { success: true };
   } catch (err) {
-    console.error("글 삭제 예외:", err);
+    console.error("연재 삭제 예외:", err);
     return { success: false, error: err };
   }
 }

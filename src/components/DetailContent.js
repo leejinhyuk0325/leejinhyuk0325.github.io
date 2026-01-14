@@ -14,6 +14,8 @@ import {
   hasUserFavorited,
   getPostsBySerialId,
   deletePost,
+  deleteSerial,
+  isAdminEmail,
 } from "@/utils/posts";
 
 export default function DetailContent({ post, tagList }) {
@@ -25,6 +27,7 @@ export default function DetailContent({ post, tagList }) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [checkingFavorite, setCheckingFavorite] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const [checkingUser, setCheckingUser] = useState(true);
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -54,6 +57,7 @@ export default function DetailContent({ post, tagList }) {
 
         if (session) {
           setCurrentUserId(session.user.id);
+          setCurrentUserEmail(session.user.email);
         }
       } catch (error) {
         console.error("사용자 확인 실패:", error);
@@ -483,7 +487,7 @@ export default function DetailContent({ post, tagList }) {
       return;
     }
 
-    const result = await deletePost(postId, currentUserId);
+    const result = await deletePost(postId, currentUserId, currentUserEmail);
 
     if (result.success) {
       setPosts((prev) => prev.filter((p) => p.id !== postId));
@@ -491,6 +495,35 @@ export default function DetailContent({ post, tagList }) {
     } else {
       console.error("글 삭제 실패:", result.error);
       alert("글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
+  // 연재(serial) 삭제 (관리자만 가능)
+  const handleDeleteSerial = async () => {
+    if (!currentUserEmail || !isAdminEmail(currentUserEmail)) {
+      alert("관리자만 연재를 삭제할 수 있습니다.");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "정말 이 연재를 삭제하시겠습니까? 연재와 모든 글(posts)이 삭제되며, 삭제 후에는 복구할 수 없습니다."
+      )
+    ) {
+      return;
+    }
+
+    const result = await deleteSerial(post.id, currentUserEmail);
+
+    if (result.success) {
+      alert("연재가 삭제되었습니다.");
+      router.push("/");
+    } else {
+      console.error("연재 삭제 실패:", result.error);
+      alert(
+        result.error?.message ||
+          "연재 삭제에 실패했습니다. 잠시 후 다시 시도해주세요."
+      );
     }
   };
 
@@ -508,8 +541,14 @@ export default function DetailContent({ post, tagList }) {
     return currentUserId === post.author_id;
   };
 
+  // 관리자인지 확인
+  const isAdmin = () => {
+    return currentUserEmail && isAdminEmail(currentUserEmail);
+  };
+
   const requirementMet = isRequirementMet();
   const showWriteButton = !checkingUser && isAuthor() && requirementMet;
+  const showAdminDeleteButton = !checkingUser && isAdmin();
 
   return (
     <>
@@ -548,35 +587,46 @@ export default function DetailContent({ post, tagList }) {
                   <h1 className="text-3xl font-bold text-gray-900 flex-1">
                     {post.title}
                   </h1>
-                  {!checkingFavorite && (
-                    <button
-                      onClick={handleToggleFavorite}
-                      className={`p-2 rounded-md transition-colors ${
-                        isFavorited
-                          ? "text-red-600 hover:text-red-700"
-                          : "text-gray-400 hover:text-red-600"
-                      }`}
-                      title={
-                        isFavorited
-                          ? "관심있는 글에서 제거"
-                          : "관심있는 글에 추가"
-                      }
-                    >
-                      <svg
-                        className="w-6 h-6"
-                        fill={isFavorited ? "currentColor" : "none"}
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                  <div className="flex items-center gap-2">
+                    {showAdminDeleteButton && (
+                      <button
+                        onClick={handleDeleteSerial}
+                        className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                        title="연재 삭제 (관리자)"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        />
-                      </svg>
-                    </button>
-                  )}
+                        연재 삭제
+                      </button>
+                    )}
+                    {!checkingFavorite && (
+                      <button
+                        onClick={handleToggleFavorite}
+                        className={`p-2 rounded-md transition-colors ${
+                          isFavorited
+                            ? "text-red-600 hover:text-red-700"
+                            : "text-gray-400 hover:text-red-600"
+                        }`}
+                        title={
+                          isFavorited
+                            ? "관심있는 글에서 제거"
+                            : "관심있는 글에 추가"
+                        }
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          fill={isFavorited ? "currentColor" : "none"}
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-sm text-gray-600">현재 공유: </span>
@@ -707,6 +757,7 @@ export default function DetailContent({ post, tagList }) {
                 {posts.map((postItem, index) => {
                   const isPostAuthor =
                     currentUserId && postItem.author_id === currentUserId;
+                  const canDeletePost = isPostAuthor || isAdmin();
 
                   return (
                     <Link
@@ -738,11 +789,12 @@ export default function DetailContent({ post, tagList }) {
                             )}
                           </p>
                         </div>
-                        {isPostAuthor && (
+                        {canDeletePost && (
                           <button
                             type="button"
                             onClick={(e) => handleDeletePost(e, postItem.id)}
                             className="ml-4 px-3 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
+                            title={isAdmin() ? "삭제 (관리자)" : "삭제"}
                           >
                             삭제
                           </button>
