@@ -159,7 +159,7 @@ export async function getAllPosts() {
     return data.map((post) => ({
       ...post,
       tagList: post.tag_list || [],
-      shareCount: shareCounts[serial.id] || 0,
+      shareCount: shareCounts[post.id] || 0,
       deadlineDisplay: formatDeadline(
         post.created_at,
         post.deadline,
@@ -234,7 +234,7 @@ export async function getPostsByCategory(category) {
     return data.map((post) => ({
       ...post,
       tagList: post.tag_list || [],
-      shareCount: shareCounts[serial.id] || 0,
+      shareCount: shareCounts[post.id] || 0,
       deadlineDisplay: formatDeadline(
         post.created_at,
         post.deadline,
@@ -320,7 +320,7 @@ export async function getTodayDeadlinePosts() {
     return filtered.map((post) => ({
       ...post,
       tagList: post.tag_list || [],
-      shareCount: shareCounts[serial.id] || 0,
+      shareCount: shareCounts[post.id] || 0,
       deadlineDisplay: formatDeadline(
         post.created_at,
         post.deadline,
@@ -420,7 +420,7 @@ export async function searchPosts(query) {
     const isTagSearch = searchTerm.startsWith("#");
     const tagName = isTagSearch ? searchTerm.substring(1) : searchTerm;
 
-    let queryBuilder = supabase.from("posts").select("*");
+    let queryBuilder = supabase.from("serials").select("*");
 
     if (isTagSearch) {
       // 태그 검색: tag_list 배열에서 검색
@@ -451,7 +451,7 @@ export async function searchPosts(query) {
       return filtered.map((post) => ({
         ...post,
         tagList: post.tag_list || [],
-        shareCount: shareCounts[serial.id] || 0,
+        shareCount: shareCounts[post.id] || 0,
         deadlineDisplay: formatDeadline(
           post.created_at,
           post.deadline,
@@ -480,7 +480,7 @@ export async function searchPosts(query) {
       return data.map((post) => ({
         ...post,
         tagList: post.tag_list || [],
-        shareCount: shareCounts[serial.id] || 0,
+        shareCount: shareCounts[post.id] || 0,
         deadlineDisplay: formatDeadline(
           post.created_at,
           post.deadline,
