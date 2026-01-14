@@ -416,27 +416,45 @@ export async function moveSerialToPaid() {
     const serialPosts = await getSerialPosts();
 
     if (serialPosts.length === 0) {
+      console.log("연재시작코너 게시글이 없습니다.");
       return { moved: 0, errors: [] };
     }
+
+    console.log(`연재시작코너 게시글 ${serialPosts.length}개 확인 중...`);
 
     let movedCount = 0;
     const errors = [];
 
     // 각 게시글의 조건 확인
     for (const post of serialPosts) {
-      // 공유 1회 이상 확인
-      if (post.shareCount < 1) {
-        continue; // 공유 조건 미달
-      }
+      // 공유 개수 확인 (최신 데이터로 다시 가져오기)
+      const shareCount = await getShareCount(post.id);
 
       // 게시글(posts) 개수 확인
       const posts = await getPostsBySerialId(post.id);
+      const postCount = posts ? posts.length : 0;
 
-      if (!posts || posts.length < 2) {
-        continue; // 게시글 2개 미만
+      console.log(
+        `Serial ${post.id}: 공유 ${shareCount}회, 게시글 ${postCount}개`
+      );
+
+      // 공유 1회 이상 확인
+      if (shareCount < 1) {
+        console.log(`Serial ${post.id}: 공유 조건 미달 (${shareCount} < 1)`);
+        continue;
+      }
+
+      // 게시글 2개 이상 확인
+      if (postCount < 2) {
+        console.log(`Serial ${post.id}: 게시글 조건 미달 (${postCount} < 2)`);
+        continue;
       }
 
       // 카테고리를 paid로 변경
+      console.log(
+        `Serial ${post.id}: 조건 충족! 유료연재코너로 이동 중... (공유: ${shareCount}회, 게시글: ${postCount}개)`
+      );
+
       const { error } = await supabase
         .from("serials")
         .update({ category: "paid" })
@@ -448,11 +466,12 @@ export async function moveSerialToPaid() {
       } else {
         movedCount++;
         console.log(
-          `게시글 ${post.id}가 유료연재코너로 이동되었습니다. (공유: ${post.shareCount}회, 게시글: ${posts.length}개)`
+          `✓ 게시글 ${post.id}가 유료연재코너로 이동되었습니다. (공유: ${shareCount}회, 게시글: ${postCount}개)`
         );
       }
     }
 
+    console.log(`총 ${movedCount}개 게시글이 유료연재코너로 이동되었습니다.`);
     return { moved: movedCount, errors };
   } catch (err) {
     console.error("연재시작코너 → 유료연재코너 이동 예외:", err);
