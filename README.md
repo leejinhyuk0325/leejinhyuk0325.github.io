@@ -186,3 +186,72 @@ npm run deploy
 ```
 
 이 명령은 로컬에서 빌드하고 GitHub Pages에 배포합니다. (로컬에서는 `.env.local` 파일의 환경 변수를 사용합니다)
+
+## 동적 라우트 페이지 구현 가이드
+
+### generateStaticParams() 필수 구현
+
+Next.js의 `output: export` 설정을 사용할 때, 모든 동적 라우트(`[param]`)를 사용하는 페이지에는 반드시 `generateStaticParams()` 함수를 구현해야 합니다.
+
+#### 단일 동적 파라미터 예시
+
+```javascript
+// src/app/detail/[id]/page.js
+export async function generateStaticParams() {
+  // 1부터 300까지의 ID를 미리 생성
+  const ids = Array.from({ length: 300 }, (_, i) => i + 1);
+  return ids.map((id) => ({
+    id: id.toString(),
+  }));
+}
+
+export default function DetailPage() {
+  return <DetailContentWrapper />;
+}
+```
+
+#### 중첩된 동적 파라미터 예시
+
+중첩된 동적 라우트(`/serials/[id]/posts/[postId]`)의 경우, 모든 파라미터 조합을 반환해야 합니다:
+
+```javascript
+// src/app/serials/[id]/posts/[postId]/page.js
+export async function generateStaticParams() {
+  // serial ID: 1부터 300까지
+  // post ID: 1부터 100까지
+  const serialIds = Array.from({ length: 300 }, (_, i) => i + 1);
+  const postIds = Array.from({ length: 100 }, (_, i) => i + 1);
+
+  // 모든 조합 생성 (serialId와 postId의 모든 조합)
+  return serialIds.flatMap((serialId) =>
+    postIds.map((postId) => ({
+      id: serialId.toString(),
+      postId: postId.toString(),
+    }))
+  );
+}
+
+export default function PostDetailPage() {
+  return <PostDetailContentWrapper />;
+}
+```
+
+#### 주의사항
+
+1. **모든 동적 라우트에 필수**: `[param]` 형태의 동적 라우트를 사용하는 모든 페이지에 `generateStaticParams()`를 구현해야 합니다.
+2. **파라미터 이름 일치**: 반환 객체의 키는 폴더 이름과 정확히 일치해야 합니다 (`[id]` → `id`, `[postId]` → `postId`).
+3. **문자열 변환**: 모든 ID 값은 문자열로 변환해야 합니다.
+4. **중첩 라우트**: 중첩된 동적 라우트의 경우 모든 파라미터 조합을 반환해야 합니다.
+
+#### 참고 예시
+
+- ✅ `/detail/[id]/page.js` - 단일 파라미터
+- ✅ `/community/[id]/page.js` - 단일 파라미터
+- ✅ `/serials/[id]/posts/write/page.js` - 단일 파라미터
+- ✅ `/serials/[id]/posts/[postId]/page.js` - 중첩 파라미터 (모든 조합 필요)
+
+이 패턴을 따르지 않으면 빌드 시 다음과 같은 오류가 발생합니다:
+
+```
+Error: Page "/serials/[id]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
+```

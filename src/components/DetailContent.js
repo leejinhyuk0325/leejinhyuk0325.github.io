@@ -466,7 +466,8 @@ export default function DetailContent({ post, tagList }) {
   // 공유 조건 달성 여부 확인 (requirement는 이제 INTEGER)
   const isRequirementMet = () => {
     const requiredShareCount = post.requirement;
-    if (requiredShareCount === null || requiredShareCount === undefined) return false;
+    if (requiredShareCount === null || requiredShareCount === undefined)
+      return false;
     return shareCount >= requiredShareCount;
   };
 
@@ -663,7 +664,9 @@ export default function DetailContent({ post, tagList }) {
         {/* 연재 글 목록 - 포스트가 1개 이상일 때 표시 */}
         {posts.length > 0 && (
           <section className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">연재 글 목록</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              연재 글 목록
+            </h2>
             {loadingPosts ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -671,9 +674,10 @@ export default function DetailContent({ post, tagList }) {
             ) : (
               <div className="space-y-4">
                 {posts.map((postItem, index) => (
-                  <div
+                  <Link
                     key={postItem.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    href={`/serials/${post.id}/posts/${postItem.id}`}
+                    className="block border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
@@ -689,15 +693,18 @@ export default function DetailContent({ post, tagList }) {
                           {postItem.content}
                         </p>
                         <p className="text-xs text-gray-400 mt-2">
-                          {new Date(postItem.created_at).toLocaleDateString("ko-KR", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
+                          {new Date(postItem.created_at).toLocaleDateString(
+                            "ko-KR",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )}
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

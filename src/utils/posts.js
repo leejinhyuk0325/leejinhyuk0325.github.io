@@ -905,6 +905,33 @@ export async function getPostsBySerialId(serialId) {
 }
 
 /**
+ * ID로 개별 글(post) 가져오기
+ */
+export async function getPostByPostId(postId) {
+  try {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+
+    if (error) {
+      console.error("글 가져오기 오류:", error);
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("글 가져오기 예외:", err);
+    return null;
+  }
+}
+
+/**
  * 연재에 속한 글(posts) 생성
  */
 export async function createPost(serialId, postData) {
