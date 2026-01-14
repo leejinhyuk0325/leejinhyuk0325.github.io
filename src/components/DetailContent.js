@@ -517,7 +517,9 @@ export default function DetailContent({ post, tagList }) {
 
     if (result.success) {
       alert("연재가 삭제되었습니다.");
+      // 메인 페이지 데이터가 즉시 최신 상태로 반영되도록 새로고침
       router.push("/");
+      router.refresh();
     } else {
       console.error("연재 삭제 실패:", result.error);
       alert(
