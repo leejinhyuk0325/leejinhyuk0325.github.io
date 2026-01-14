@@ -84,14 +84,14 @@ export function formatDeadline(createdAt, deadlineDays, category) {
 }
 
 /**
- * Post의 share 개수 가져오기
+ * Serial의 share 개수 가져오기
  */
-export async function getShareCount(postId) {
+export async function getShareCount(serialId) {
   try {
     const { count, error } = await supabase
       .from("shares")
       .select("*", { count: "exact", head: true })
-      .eq("post_id", postId);
+      .eq("serial_id", serialId);
 
     if (error) {
       console.error("Share count 가져오기 오류:", error);
@@ -106,27 +106,27 @@ export async function getShareCount(postId) {
 }
 
 /**
- * 여러 Post의 share 개수 가져오기 (배치)
+ * 여러 Serial의 share 개수 가져오기 (배치)
  */
-async function getShareCounts(postIds) {
+async function getShareCounts(serialIds) {
   try {
     const { data, error } = await supabase
       .from("shares")
-      .select("post_id")
-      .in("post_id", postIds);
+      .select("serial_id")
+      .in("serial_id", serialIds);
 
     if (error) {
       console.error("Share counts 가져오기 오류:", error);
       return {};
     }
 
-    // post_id별로 개수 세기
+    // serial_id별로 개수 세기
     const counts = {};
-    postIds.forEach((id) => {
+    serialIds.forEach((id) => {
       counts[id] = 0;
     });
     data.forEach((share) => {
-      counts[share.post_id] = (counts[share.post_id] || 0) + 1;
+      counts[share.serial_id] = (counts[share.serial_id] || 0) + 1;
     });
 
     return counts;
@@ -142,7 +142,7 @@ async function getShareCounts(postIds) {
 export async function getAllPosts() {
   try {
     const { data, error } = await supabase
-      .from("posts")
+      .from("serials")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -152,14 +152,14 @@ export async function getAllPosts() {
     }
 
     // share 개수 가져오기
-    const postIds = data.map((post) => post.id);
-    const shareCounts = await getShareCounts(postIds);
+    const serialIds = data.map((serial) => serial.id);
+    const shareCounts = await getShareCounts(serialIds);
 
     // tagList를 배열로 변환하고 shareCount 추가, deadline 표시 형식 계산
     return data.map((post) => ({
       ...post,
       tagList: post.tag_list || [],
-      shareCount: shareCounts[post.id] || 0,
+      shareCount: shareCounts[serial.id] || 0,
       deadlineDisplay: formatDeadline(
         post.created_at,
         post.deadline,
@@ -178,7 +178,7 @@ export async function getAllPosts() {
 export async function getPostById(id) {
   try {
     const { data, error } = await supabase
-      .from("posts")
+      .from("serials")
       .select("*")
       .eq("id", id)
       .single();
@@ -217,7 +217,7 @@ export async function getPostById(id) {
 export async function getPostsByCategory(category) {
   try {
     const { data, error } = await supabase
-      .from("posts")
+      .from("serials")
       .select("*")
       .eq("category", category)
       .order("created_at", { ascending: false });
@@ -228,13 +228,13 @@ export async function getPostsByCategory(category) {
     }
 
     // share 개수 가져오기
-    const postIds = data.map((post) => post.id);
-    const shareCounts = await getShareCounts(postIds);
+    const serialIds = data.map((serial) => serial.id);
+    const shareCounts = await getShareCounts(serialIds);
 
     return data.map((post) => ({
       ...post,
       tagList: post.tag_list || [],
-      shareCount: shareCounts[post.id] || 0,
+      shareCount: shareCounts[serial.id] || 0,
       deadlineDisplay: formatDeadline(
         post.created_at,
         post.deadline,
@@ -269,7 +269,7 @@ export async function getTodayDeadlinePosts() {
 
     // 모든 posts 가져오기 (category 필터 없음)
     const { data, error } = await supabase
-      .from("posts")
+      .from("serials")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -320,7 +320,7 @@ export async function getTodayDeadlinePosts() {
     return filtered.map((post) => ({
       ...post,
       tagList: post.tag_list || [],
-      shareCount: shareCounts[post.id] || 0,
+      shareCount: shareCounts[serial.id] || 0,
       deadlineDisplay: formatDeadline(
         post.created_at,
         post.deadline,
@@ -387,7 +387,7 @@ export async function movePopularToSerial() {
       if (post.shareCount >= requiredShareCount) {
         // 카테고리를 serial로 변경
         const { error } = await supabase
-          .from("posts")
+          .from("serials")
           .update({ category: "serial" })
           .eq("id", post.id);
 
@@ -451,7 +451,7 @@ export async function searchPosts(query) {
       return filtered.map((post) => ({
         ...post,
         tagList: post.tag_list || [],
-        shareCount: shareCounts[post.id] || 0,
+        shareCount: shareCounts[serial.id] || 0,
         deadlineDisplay: formatDeadline(
           post.created_at,
           post.deadline,
@@ -480,7 +480,7 @@ export async function searchPosts(query) {
       return data.map((post) => ({
         ...post,
         tagList: post.tag_list || [],
-        shareCount: shareCounts[post.id] || 0,
+        shareCount: shareCounts[serial.id] || 0,
         deadlineDisplay: formatDeadline(
           post.created_at,
           post.deadline,
@@ -495,9 +495,9 @@ export async function searchPosts(query) {
 }
 
 /**
- * Post 생성
+ * Serial 생성 (연재 생성)
  */
-export async function createPost(postData) {
+export async function createSerial(postData) {
   try {
     // 현재 사용자 세션 가져오기
     const {
@@ -505,7 +505,7 @@ export async function createPost(postData) {
     } = await supabase.auth.getSession();
 
     const { data, error } = await supabase
-      .from("posts")
+      .from("serials")
       .insert([
         {
           title: postData.title,
@@ -523,23 +523,23 @@ export async function createPost(postData) {
       .single();
 
     if (error) {
-      console.error("Post 생성 오류:", error);
+      console.error("Serial 생성 오류:", error);
       throw error;
     }
 
     return data;
   } catch (err) {
-    console.error("Post 생성 예외:", err);
+    console.error("Serial 생성 예외:", err);
     throw err;
   }
 }
 
 /**
- * 모든 post ID 가져오기 (정적 생성용)
+ * 모든 serial ID 가져오기 (정적 생성용)
  */
-export async function getAllPostIds() {
+export async function getAllSerialIds() {
   try {
-    const { data, error } = await supabase.from("posts").select("id");
+    const { data, error } = await supabase.from("serials").select("id");
 
     if (error) {
       console.error("Post IDs 가져오기 오류:", error);
@@ -556,12 +556,12 @@ export async function getAllPostIds() {
 /**
  * Post에 share 추가
  */
-export async function addShare(postId, userId) {
+export async function addShare(serialId, userId) {
   try {
     const { data, error } = await supabase
       .from("shares")
       .insert({
-        post_id: postId,
+        serial_id: serialId,
         user_id: userId,
       })
       .select()
@@ -582,12 +582,12 @@ export async function addShare(postId, userId) {
 /**
  * Post에서 share 제거
  */
-export async function removeShare(postId, userId) {
+export async function removeShare(serialId, userId) {
   try {
     const { error } = await supabase
       .from("shares")
       .delete()
-      .eq("post_id", postId)
+      .eq("serial_id", serialId)
       .eq("user_id", userId);
 
     if (error) {
@@ -605,12 +605,12 @@ export async function removeShare(postId, userId) {
 /**
  * 사용자가 특정 Post를 share했는지 확인
  */
-export async function hasUserShared(postId, userId) {
+export async function hasUserShared(serialId, userId) {
   try {
     const { data, error } = await supabase
       .from("shares")
       .select("id")
-      .eq("post_id", postId)
+      .eq("serial_id", serialId)
       .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
@@ -636,34 +636,34 @@ export async function getUserSharedPosts(userId) {
       .from("shares")
       .select(
         `
-        post_id,
+        serial_id,
         created_at,
-        posts (*)
+        serials (*)
       `
       )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("공유한 게시글 가져오기 오류:", error);
+      console.error("공유한 연재 가져오기 오류:", error);
       return [];
     }
 
     // share 개수 가져오기
-    const postIds = data.map((share) => share.post_id);
-    const shareCounts = await getShareCounts(postIds);
+    const serialIds = data.map((share) => share.serial_id);
+    const shareCounts = await getShareCounts(serialIds);
 
     return data
-      .filter((share) => share.posts)
+      .filter((share) => share.serials)
       .map((share) => ({
-        ...share.posts,
-        tagList: share.posts.tag_list || [],
-        shareCount: shareCounts[share.post_id] || 0,
+        ...share.serials,
+        tagList: share.serials.tag_list || [],
+        shareCount: shareCounts[share.serial_id] || 0,
         sharedAt: share.created_at,
         deadlineDisplay: formatDeadline(
-          share.posts.created_at,
-          share.posts.deadline,
-          share.posts.category
+          share.serials.created_at,
+          share.serials.deadline,
+          share.serials.category
         ),
       }));
   } catch (err) {
@@ -675,12 +675,12 @@ export async function getUserSharedPosts(userId) {
 /**
  * 관심있는 글 추가
  */
-export async function addFavorite(postId, userId) {
+export async function addFavorite(serialId, userId) {
   try {
     const { data, error } = await supabase
       .from("favorites")
       .insert({
-        post_id: postId,
+        serial_id: serialId,
         user_id: userId,
       })
       .select()
@@ -715,12 +715,12 @@ export async function addFavorite(postId, userId) {
 /**
  * 관심있는 글 제거
  */
-export async function removeFavorite(postId, userId) {
+export async function removeFavorite(serialId, userId) {
   try {
     const { error } = await supabase
       .from("favorites")
       .delete()
-      .eq("post_id", postId)
+      .eq("serial_id", serialId)
       .eq("user_id", userId);
 
     if (error) {
@@ -758,9 +758,9 @@ export async function getUserFavorites(userId) {
       .from("favorites")
       .select(
         `
-        post_id,
+        serial_id,
         created_at,
-        posts (*)
+        serials (*)
       `
       )
       .eq("user_id", userId)
@@ -778,25 +778,25 @@ export async function getUserFavorites(userId) {
         );
         return [];
       }
-      console.error("관심있는 글 가져오기 오류:", error);
+      console.error("관심있는 연재 가져오기 오류:", error);
       return [];
     }
 
     // share 개수 가져오기
-    const postIds = data.map((fav) => fav.post_id);
-    const shareCounts = await getShareCounts(postIds);
+    const serialIds = data.map((fav) => fav.serial_id);
+    const shareCounts = await getShareCounts(serialIds);
 
     return data
-      .filter((fav) => fav.posts)
+      .filter((fav) => fav.serials)
       .map((fav) => ({
-        ...fav.posts,
-        tagList: fav.posts.tag_list || [],
-        shareCount: shareCounts[fav.post_id] || 0,
+        ...fav.serials,
+        tagList: fav.serials.tag_list || [],
+        shareCount: shareCounts[fav.serial_id] || 0,
         favoritedAt: fav.created_at,
         deadlineDisplay: formatDeadline(
-          fav.posts.created_at,
-          fav.posts.deadline,
-          fav.posts.category
+          fav.serials.created_at,
+          fav.serials.deadline,
+          fav.serials.category
         ),
       }));
   } catch (err) {
@@ -808,12 +808,12 @@ export async function getUserFavorites(userId) {
 /**
  * 사용자가 특정 Post를 관심있는 글에 추가했는지 확인
  */
-export async function hasUserFavorited(postId, userId) {
+export async function hasUserFavorited(serialId, userId) {
   try {
     const { data, error } = await supabase
       .from("favorites")
       .select("id")
-      .eq("post_id", postId)
+      .eq("serial_id", serialId)
       .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
@@ -848,7 +848,7 @@ export async function publishToPopular(postId, userId) {
   try {
     // 먼저 해당 게시글이 현재 사용자의 것인지 확인 (선택사항)
     const { data: post, error: postError } = await supabase
-      .from("posts")
+      .from("serials")
       .select("id, category")
       .eq("id", postId)
       .single();
@@ -863,7 +863,7 @@ export async function publishToPopular(postId, userId) {
 
     // 카테고리를 popular로 변경
     const { data, error } = await supabase
-      .from("posts")
+      .from("serials")
       .update({ category: "popular" })
       .eq("id", postId)
       .select()
@@ -878,5 +878,67 @@ export async function publishToPopular(postId, userId) {
   } catch (err) {
     console.error("연재도전 연재 예외:", err);
     return { success: false, error: err };
+  }
+}
+
+/**
+ * 연재에 속한 글(posts) 가져오기
+ */
+export async function getPostsBySerialId(serialId) {
+  try {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("serial_id", serialId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("글 가져오기 오류:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("글 가져오기 예외:", err);
+    return [];
+  }
+}
+
+/**
+ * 연재에 속한 글(posts) 생성
+ */
+export async function createPost(serialId, postData) {
+  try {
+    // 현재 사용자 세션 가져오기
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      throw new Error("로그인이 필요합니다.");
+    }
+
+    const { data, error } = await supabase
+      .from("posts")
+      .insert([
+        {
+          serial_id: serialId,
+          title: postData.title,
+          content: postData.content,
+          author_id: session.user.id,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("글 생성 오류:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("글 생성 예외:", err);
+    throw err;
   }
 }

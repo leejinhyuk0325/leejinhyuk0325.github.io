@@ -627,7 +627,7 @@ export default function DetailContent({ post, tagList }) {
         {/* 글쓰기 버튼 - 공유 조건 달성 시 작성자에게만 표시 */}
         {showWriteButton && (
           <Link
-            href="/mypage/author/write"
+            href={`/serials/${post.id}/posts/write`}
             className="w-full mt-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-lg flex items-center justify-center gap-2"
           >
             <svg

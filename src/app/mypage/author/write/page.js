@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
-import { createPost } from "@/utils/posts";
+import { createSerial } from "@/utils/posts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -102,10 +102,10 @@ export default function AuthorWritePage() {
         return;
       }
 
-      // Supabase에 게시글 저장
-      const newPost = await createPost(postData);
+      // Supabase에 연재 저장
+      const newSerial = await createSerial(postData);
 
-      if (newPost) {
+      if (newSerial) {
         // 성공 시 작가 페이지로 이동
         router.push("/mypage/author");
       } else {
