@@ -12,6 +12,7 @@ import {
   addFavorite,
   removeFavorite,
   hasUserFavorited,
+  getPostsBySerialId,
 } from "@/utils/posts";
 
 export default function DetailContent({ post, tagList }) {
@@ -24,6 +25,8 @@ export default function DetailContent({ post, tagList }) {
   const [checkingFavorite, setCheckingFavorite] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [checkingUser, setCheckingUser] = useState(true);
+  const [posts, setPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
   const captureAreaRef = useRef(null);
 
   // 컴포넌트 마운트 시 최신 공유 수 가져오기
@@ -81,6 +84,39 @@ export default function DetailContent({ post, tagList }) {
     };
 
     checkFavoriteStatus();
+  }, [post.id]);
+
+  // 연재에 속한 글(posts) 가져오기
+  useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        setLoadingPosts(true);
+        const postsData = await getPostsBySerialId(post.id);
+        setPosts(postsData || []);
+      } catch (error) {
+        console.error("글 목록 로드 실패:", error);
+        setPosts([]);
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+
+    if (post.id) {
+      loadPosts();
+    }
+
+    // 페이지 포커스 시 글 목록 새로고침 (글 작성 후 돌아왔을 때 자동 업데이트)
+    const handleFocus = () => {
+      if (post.id) {
+        loadPosts();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [post.id]);
 
   const handleToggleFavorite = async () => {
@@ -623,6 +659,50 @@ export default function DetailContent({ post, tagList }) {
         >
           공유하기
         </button>
+
+        {/* 연재 글 목록 - 포스트가 1개 이상일 때 표시 */}
+        {posts.length > 0 && (
+          <section className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">연재 글 목록</h2>
+            {loadingPosts ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {posts.map((postItem, index) => (
+                  <div
+                    key={postItem.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-semibold text-gray-500">
+                            {posts.length - index}화
+                          </span>
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {postItem.title}
+                          </h3>
+                        </div>
+                        <p className="text-gray-600 text-sm line-clamp-2">
+                          {postItem.content}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {new Date(postItem.created_at).toLocaleDateString("ko-KR", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* 글쓰기 버튼 - 공유 조건 달성 시 작성자에게만 표시 */}
         {showWriteButton && (

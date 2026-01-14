@@ -91,9 +91,8 @@ export default function PostWriteContent() {
       const newPost = await createPost(parseInt(serialId), postData);
 
       if (newPost) {
-        // 성공 시 메인페이지로 이동하여 카테고리 변경 사항 반영
-        // (연재도전에서 연재시작코너로 이동한 경우 메인페이지에서 확인 가능)
-        router.push("/");
+        // 성공 시 연재 디테일 페이지로 이동하여 작성한 글 확인
+        router.push(`/detail/${serialId}`);
         router.refresh();
       } else {
         setError("글 작성에 실패했습니다. 다시 시도해주세요.");
