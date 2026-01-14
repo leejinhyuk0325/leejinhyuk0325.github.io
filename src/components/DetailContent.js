@@ -23,6 +23,10 @@ export default function DetailContent({ post, tagList }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [isSubmittingLink, setIsSubmittingLink] = useState(false);
+  const [linkError, setLinkError] = useState("");
   const [shareCount, setShareCount] = useState(post.shareCount || 0);
   const [isFavorited, setIsFavorited] = useState(false);
   const [checkingFavorite, setCheckingFavorite] = useState(true);
@@ -463,6 +467,63 @@ export default function DetailContent({ post, tagList }) {
     }
   };
 
+  const handleOpenLinkForm = () => {
+    setIsLinkFormOpen(true);
+    setLinkError("");
+  };
+
+  const handleSubmitLink = async (e) => {
+    e.preventDefault();
+
+    if (!linkUrl.trim()) {
+      setLinkError("링크를 입력해주세요.");
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert("로그인이 필요합니다.");
+      router.push("/login");
+      return;
+    }
+
+    setIsSubmittingLink(true);
+    setLinkError("");
+
+    try {
+      const userId = session.user.id;
+      const postId = post.id;
+
+      const alreadyShared = await hasUserShared(postId, userId);
+
+      if (alreadyShared) {
+        setLinkError("이미 이 글의 링크를 등록하셨습니다.");
+        return;
+      }
+
+      const result = await addShare(postId, userId);
+
+      if (!result.success) {
+        console.error("링크 등록 실패:", result.error);
+        setLinkError("링크 등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
+      setShareCount((prev) => prev + 1);
+      alert("링크가 등록되었습니다!");
+      setLinkUrl("");
+      setIsLinkFormOpen(false);
+    } catch (error) {
+      console.error("링크 등록 중 오류:", error);
+      setLinkError("링크 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsSubmittingLink(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setCapturedImage(null);
@@ -878,32 +939,70 @@ export default function DetailContent({ post, tagList }) {
                       className="w-full h-auto"
                     />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleDownload}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
-                    >
-                      이미지 다운로드
-                    </button>
-                    <button
-                      onClick={handleShare}
-                      className="flex-shrink-0 w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center"
-                      title="공유하기"
-                    >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleDownload}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                        이미지 다운로드
+                      </button>
+                      <button
+                        onClick={handleShare}
+                        className="flex-shrink-0 px-4 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center text-sm font-medium"
+                        title="복사하기"
+                      >
+                        복사하기
+                      </button>
+                    </div>
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={handleOpenLinkForm}
+                        className="w-full bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 font-semibold py-2.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all text-sm"
+                      >
+                        링크 등록하기
+                      </button>
+                    </div>
+                    {isLinkFormOpen && (
+                      <form
+                        onSubmit={handleSubmitLink}
+                        className="mt-2 space-y-2"
+                      >
+                        <input
+                          type="url"
+                          value={linkUrl}
+                          onChange={(e) => setLinkUrl(e.target.value)}
+                          placeholder="등록할 링크를 입력해주세요."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                         />
-                      </svg>
-                    </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="submit"
+                            disabled={isSubmittingLink}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {isSubmittingLink ? "보내는 중..." : "보내기"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsLinkFormOpen(false);
+                              setLinkUrl("");
+                              setLinkError("");
+                            }}
+                            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                          >
+                            취소
+                          </button>
+                        </div>
+                        {linkError && (
+                          <p className="text-xs text-red-500 mt-1">
+                            {linkError}
+                          </p>
+                        )}
+                      </form>
+                    )}
                   </div>
                 </div>
               ) : (
