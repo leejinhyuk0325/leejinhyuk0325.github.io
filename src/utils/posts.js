@@ -266,20 +266,27 @@ export async function getPostsByCategory(category) {
       return [];
     }
 
+    // null이나 undefined 데이터 필터링
+    if (!data || data.length === 0) {
+      return [];
+    }
+
     // share 개수 가져오기
-    const serialIds = data.map((serial) => serial.id);
+    const serialIds = data.map((serial) => serial.id).filter((id) => id != null);
     const shareCounts = await getShareCounts(serialIds);
 
-    return data.map((post) => ({
-      ...post,
-      tagList: post.tag_list || [],
-      shareCount: shareCounts[post.id] || 0,
-      deadlineDisplay: formatDeadline(
-        post.created_at,
-        post.deadline,
-        post.category
-      ),
-    }));
+    return data
+      .filter((post) => post != null && post.id != null) // null 체크
+      .map((post) => ({
+        ...post,
+        tagList: post.tag_list || [],
+        shareCount: shareCounts[post.id] || 0,
+        deadlineDisplay: formatDeadline(
+          post.created_at,
+          post.deadline,
+          post.category
+        ),
+      }));
   } catch (err) {
     console.error("카테고리별 posts 가져오기 예외:", err);
     return [];
@@ -317,8 +324,18 @@ export async function getTodayDeadlinePosts() {
       return [];
     }
 
+    // null이나 undefined 데이터 필터링
+    if (!data || data.length === 0) {
+      return [];
+    }
+
     // 클라이언트 측에서 마감일이 오늘인 것만 필터링
     const filtered = data.filter((post) => {
+      // null 체크
+      if (!post || !post.id) {
+        return false;
+      }
+
       if (
         !post.created_at ||
         post.deadline === null ||
@@ -353,19 +370,21 @@ export async function getTodayDeadlinePosts() {
     });
 
     // share 개수 가져오기
-    const postIds = filtered.map((post) => post.id);
+    const postIds = filtered.map((post) => post.id).filter((id) => id != null);
     const shareCounts = await getShareCounts(postIds);
 
-    return filtered.map((post) => ({
-      ...post,
-      tagList: post.tag_list || [],
-      shareCount: shareCounts[post.id] || 0,
-      deadlineDisplay: formatDeadline(
-        post.created_at,
-        post.deadline,
-        post.category
-      ),
-    }));
+    return filtered
+      .filter((post) => post != null && post.id != null) // 추가 null 체크
+      .map((post) => ({
+        ...post,
+        tagList: post.tag_list || [],
+        shareCount: shareCounts[post.id] || 0,
+        deadlineDisplay: formatDeadline(
+          post.created_at,
+          post.deadline,
+          post.category
+        ),
+      }));
   } catch (err) {
     console.error("오늘 마감 posts 가져오기 예외:", err);
     return [];
