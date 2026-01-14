@@ -408,7 +408,7 @@ export async function movePopularToSerial() {
 }
 
 /**
- * 연재시작코너 게시글 중 공유 1000회 이상, 게시글 10개 이상인 것을 유료연재코너로 이동
+ * 연재시작코너 게시글 중 공유 1회 이상, 게시글 2개 이상인 것을 유료연재코너로 이동
  */
 export async function moveSerialToPaid() {
   try {
@@ -424,16 +424,16 @@ export async function moveSerialToPaid() {
 
     // 각 게시글의 조건 확인
     for (const post of serialPosts) {
-      // 공유 1000회 이상 확인
-      if (post.shareCount < 1000) {
+      // 공유 1회 이상 확인
+      if (post.shareCount < 1) {
         continue; // 공유 조건 미달
       }
 
       // 게시글(posts) 개수 확인
       const posts = await getPostsBySerialId(post.id);
 
-      if (!posts || posts.length < 10) {
-        continue; // 게시글 10개 미만
+      if (!posts || posts.length < 2) {
+        continue; // 게시글 2개 미만
       }
 
       // 카테고리를 paid로 변경
