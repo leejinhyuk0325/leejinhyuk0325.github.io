@@ -936,6 +936,43 @@ export async function createPost(serialId, postData) {
       throw error;
     }
 
+    // 글 작성 후, 연재도전에서 공유 조건이 충족된 경우 연재시작코너로 이동
+    try {
+      // serial 정보 가져오기
+      const serial = await getPostById(serialId);
+
+      if (serial && serial.category === "popular") {
+        // 공유 조건 확인
+        const requiredShareCount = serial.requirement;
+
+        if (requiredShareCount !== null && requiredShareCount !== undefined) {
+          // 현재 공유 개수가 조건을 충족하는지 확인
+          if (serial.shareCount >= requiredShareCount) {
+            // 카테고리를 serial로 변경
+            const { error: updateError } = await supabase
+              .from("serials")
+              .update({ category: "serial" })
+              .eq("id", serialId);
+
+            if (updateError) {
+              console.error(
+                `게시글 ${serialId} 연재시작코너 이동 실패:`,
+                updateError
+              );
+              // 에러가 발생해도 글 작성은 성공했으므로 계속 진행
+            } else {
+              console.log(
+                `게시글 ${serialId}가 연재시작코너로 이동되었습니다.`
+              );
+            }
+          }
+        }
+      }
+    } catch (moveError) {
+      // 카테고리 이동 실패해도 글 작성은 성공했으므로 에러를 무시
+      console.error("연재시작코너 이동 중 오류 (글 작성은 성공):", moveError);
+    }
+
     return data;
   } catch (err) {
     console.error("글 생성 예외:", err);
