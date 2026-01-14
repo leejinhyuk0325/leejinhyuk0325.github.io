@@ -199,7 +199,7 @@ Next.js의 `output: export` 설정을 사용할 때, 모든 동적 라우트(`[p
 // src/app/detail/[id]/page.js
 export async function generateStaticParams() {
   // 1부터 300까지의 ID를 미리 생성
-  const ids = Array.from({ length: 300 }, (_, i) => i + 1);
+  const ids = Array.from({ length: 50 }, (_, i) => i + 1);
   return ids.map((id) => ({
     id: id.toString(),
   }));
@@ -219,8 +219,8 @@ export default function DetailPage() {
 export async function generateStaticParams() {
   // serial ID: 1부터 300까지
   // post ID: 1부터 100까지
-  const serialIds = Array.from({ length: 300 }, (_, i) => i + 1);
-  const postIds = Array.from({ length: 100 }, (_, i) => i + 1);
+  const serialIds = Array.from({ length: 50 }, (_, i) => i + 1);
+  const postIds = Array.from({ length: 50 }, (_, i) => i + 1);
 
   // 모든 조합 생성 (serialId와 postId의 모든 조합)
   return serialIds.flatMap((serialId) =>
