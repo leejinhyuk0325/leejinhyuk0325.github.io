@@ -840,7 +840,7 @@ export default function DetailContent({ post, tagList }) {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-2xl font-bold text-gray-900">
-                TASTE 신청 이미지 미리보기
+                게시글 공유하기
               </h2>
               <button
                 onClick={handleCloseModal}
