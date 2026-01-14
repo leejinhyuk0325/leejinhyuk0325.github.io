@@ -936,7 +936,7 @@ export async function createPost(serialId, postData) {
       throw error;
     }
 
-    // 글 작성 후, 연재도전에서 공유 조건이 충족된 경우 연재시작코너로 이동
+    // 글 작성 후, 연재도전에서 공유 조건이 충족되고 연재에 글이 1개 이상 있으면 연재시작코너로 이동
     try {
       // serial 정보 가져오기
       const serial = await getPostById(serialId);
@@ -948,22 +948,28 @@ export async function createPost(serialId, postData) {
         if (requiredShareCount !== null && requiredShareCount !== undefined) {
           // 현재 공유 개수가 조건을 충족하는지 확인
           if (serial.shareCount >= requiredShareCount) {
-            // 카테고리를 serial로 변경
-            const { error: updateError } = await supabase
-              .from("serials")
-              .update({ category: "serial" })
-              .eq("id", serialId);
+            // 연재에 속한 글(posts) 개수 확인 (방금 작성한 글 포함)
+            const posts = await getPostsBySerialId(serialId);
 
-            if (updateError) {
-              console.error(
-                `게시글 ${serialId} 연재시작코너 이동 실패:`,
-                updateError
-              );
-              // 에러가 발생해도 글 작성은 성공했으므로 계속 진행
-            } else {
-              console.log(
-                `게시글 ${serialId}가 연재시작코너로 이동되었습니다.`
-              );
+            // 연재에 글이 1개 이상 있으면 연재시작코너로 이동
+            if (posts && posts.length >= 1) {
+              // 카테고리를 serial로 변경
+              const { error: updateError } = await supabase
+                .from("serials")
+                .update({ category: "serial" })
+                .eq("id", serialId);
+
+              if (updateError) {
+                console.error(
+                  `게시글 ${serialId} 연재시작코너 이동 실패:`,
+                  updateError
+                );
+                // 에러가 발생해도 글 작성은 성공했으므로 계속 진행
+              } else {
+                console.log(
+                  `게시글 ${serialId}가 연재시작코너로 이동되었습니다. (글 ${posts.length}개 작성됨)`
+                );
+              }
             }
           }
         }
