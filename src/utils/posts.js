@@ -1043,6 +1043,34 @@ export async function getPostByPostId(postId) {
 }
 
 /**
+ * 개별 글(post) 삭제
+ * 작성자(author_id)가 일치하는 경우에만 삭제
+ */
+export async function deletePost(postId, userId) {
+  try {
+    if (!postId || !userId) {
+      return { success: false, error: new Error("잘못된 요청입니다.") };
+    }
+
+    const { error } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", postId)
+      .eq("author_id", userId);
+
+    if (error) {
+      console.error("글 삭제 오류:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("글 삭제 예외:", err);
+    return { success: false, error: err };
+  }
+}
+
+/**
  * 연재에 속한 글(posts) 생성
  */
 export async function createPost(serialId, postData) {

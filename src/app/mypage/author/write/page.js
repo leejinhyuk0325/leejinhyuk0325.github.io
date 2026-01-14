@@ -19,10 +19,8 @@ export default function AuthorWritePage() {
   const [checking, setChecking] = useState(true);
   const router = useRouter();
 
-  const categories = [
-    { id: "paid", name: "유료연재코너" },
-    { id: "popular", name: "연재도전" },
-  ];
+  // 작가는 마이페이지에서 연재도전 카테고리만 작성 가능
+  const categories = [{ id: "popular", name: "연재도전" }];
 
   useEffect(() => {
     const checkUser = async () => {
@@ -152,7 +150,7 @@ export default function AuthorWritePage() {
                 htmlFor="category"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                카테고리
+                카테고리 (마이페이지에서는 연재도전만 작성 가능)
               </label>
               <select
                 id="category"

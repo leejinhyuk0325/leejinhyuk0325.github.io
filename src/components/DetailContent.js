@@ -13,6 +13,7 @@ import {
   removeFavorite,
   hasUserFavorited,
   getPostsBySerialId,
+  deletePost,
 } from "@/utils/posts";
 
 export default function DetailContent({ post, tagList }) {
@@ -463,6 +464,36 @@ export default function DetailContent({ post, tagList }) {
     setCapturedImage(null);
   };
 
+  // 개별 글 삭제
+  const handleDeletePost = async (e, postId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!currentUserId) {
+      alert("로그인이 필요합니다.");
+      router.push("/login");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "정말 이 글을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다."
+      )
+    ) {
+      return;
+    }
+
+    const result = await deletePost(postId, currentUserId);
+
+    if (result.success) {
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      alert("글이 삭제되었습니다.");
+    } else {
+      console.error("글 삭제 실패:", result.error);
+      alert("글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
   // 공유 조건 달성 여부 확인 (requirement는 이제 INTEGER)
   const isRequirementMet = () => {
     const requiredShareCount = post.requirement;
@@ -673,39 +704,53 @@ export default function DetailContent({ post, tagList }) {
               </div>
             ) : (
               <div className="space-y-4">
-                {posts.map((postItem, index) => (
-                  <Link
-                    key={postItem.id}
-                    href={`/serials/${post.id}/posts/${postItem.id}`}
-                    className="block border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm font-semibold text-gray-500">
-                            {posts.length - index}화
-                          </span>
-                          <h3 className="text-lg font-bold text-gray-900">
-                            {postItem.title}
-                          </h3>
+                {posts.map((postItem, index) => {
+                  const isPostAuthor =
+                    currentUserId && postItem.author_id === currentUserId;
+
+                  return (
+                    <Link
+                      key={postItem.id}
+                      href={`/serials/${post.id}/posts/${postItem.id}`}
+                      className="block border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-500">
+                              {posts.length - index}화
+                            </span>
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {postItem.title}
+                            </h3>
+                          </div>
+                          <p className="text-gray-600 text-sm line-clamp-2">
+                            {postItem.content}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {new Date(postItem.created_at).toLocaleDateString(
+                              "ko-KR",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }
+                            )}
+                          </p>
                         </div>
-                        <p className="text-gray-600 text-sm line-clamp-2">
-                          {postItem.content}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          {new Date(postItem.created_at).toLocaleDateString(
-                            "ko-KR",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            }
-                          )}
-                        </p>
+                        {isPostAuthor && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeletePost(e, postItem.id)}
+                            className="ml-4 px-3 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
+                          >
+                            삭제
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </section>
