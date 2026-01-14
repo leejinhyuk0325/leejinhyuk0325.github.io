@@ -170,25 +170,7 @@ export default function DetailContent({ post, tagList }) {
       return;
     }
 
-    const userId = session.user.id;
-    const postId = post.id;
-
-    // 이미 공유했는지 확인
-    const alreadyShared = await hasUserShared(postId, userId);
-
-    // 공유하지 않은 경우에만 shares 테이블에 추가
-    if (!alreadyShared) {
-      const result = await addShare(postId, userId);
-      if (result.success) {
-        // 공유 수 업데이트
-        setShareCount((prev) => prev + 1);
-      } else {
-        console.error("공유 추가 실패:", result.error);
-        // 에러가 발생해도 모달은 띄움
-      }
-    }
-
-    // 모달 열기
+    // 모달 열기 (공유 카운트는 링크 등록하기에서만 증가)
     setIsModalOpen(true);
     setIsCapturing(true);
 
