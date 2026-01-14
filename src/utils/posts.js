@@ -408,6 +408,59 @@ export async function movePopularToSerial() {
 }
 
 /**
+ * 연재시작코너 게시글 중 공유 1000회 이상, 게시글 10개 이상인 것을 유료연재코너로 이동
+ */
+export async function moveSerialToPaid() {
+  try {
+    // 연재시작코너 게시글 가져오기
+    const serialPosts = await getSerialPosts();
+
+    if (serialPosts.length === 0) {
+      return { moved: 0, errors: [] };
+    }
+
+    let movedCount = 0;
+    const errors = [];
+
+    // 각 게시글의 조건 확인
+    for (const post of serialPosts) {
+      // 공유 1000회 이상 확인
+      if (post.shareCount < 1000) {
+        continue; // 공유 조건 미달
+      }
+
+      // 게시글(posts) 개수 확인
+      const posts = await getPostsBySerialId(post.id);
+
+      if (!posts || posts.length < 10) {
+        continue; // 게시글 10개 미만
+      }
+
+      // 카테고리를 paid로 변경
+      const { error } = await supabase
+        .from("serials")
+        .update({ category: "paid" })
+        .eq("id", post.id);
+
+      if (error) {
+        console.error(`게시글 ${post.id} 유료연재코너 이동 실패:`, error);
+        errors.push({ postId: post.id, error });
+      } else {
+        movedCount++;
+        console.log(
+          `게시글 ${post.id}가 유료연재코너로 이동되었습니다. (공유: ${post.shareCount}회, 게시글: ${posts.length}개)`
+        );
+      }
+    }
+
+    return { moved: movedCount, errors };
+  } catch (err) {
+    console.error("연재시작코너 → 유료연재코너 이동 예외:", err);
+    return { moved: 0, errors: [{ error: err }] };
+  }
+}
+
+/**
  * 검색어로 posts 검색
  */
 export async function searchPosts(query) {

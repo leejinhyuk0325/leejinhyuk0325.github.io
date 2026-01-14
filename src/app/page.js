@@ -7,11 +7,15 @@ import {
   getPaidSeriesPosts,
   getSerialPosts,
   movePopularToSerial,
+  moveSerialToPaid,
 } from "@/utils/posts";
 
 export default async function Home() {
   // 연재도전 게시글 중 공유 조건 충족된 것을 연재시작코너로 이동
   await movePopularToSerial();
+
+  // 연재시작코너 게시글 중 공유 1000회 이상, 게시글 10개 이상인 것을 유료연재코너로 이동
+  await moveSerialToPaid();
 
   const [popularPosts, todayDeadline, paidSeries, serialPosts] =
     await Promise.all([
