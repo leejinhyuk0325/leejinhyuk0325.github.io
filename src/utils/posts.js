@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
  * 마감일 계산 및 표시 형식 변환 헬퍼 함수
  * @param {Date} createdAt - 게시글 생성일
  * @param {number} deadlineDays - 마감까지 일수
- * @param {string} category - 카테고리 ('popular', 'deadline', 'paid')
+ * @param {string} category - 카테고리 ('popular', 'deadline', 'paid', 'serial')
  * @returns {string} - 표시할 마감일 문자열
  */
 export function formatDeadline(createdAt, deadlineDays, category) {
@@ -37,6 +37,20 @@ export function formatDeadline(createdAt, deadlineDays, category) {
 
   // 연재도전인 경우: 마감일까지 남은 일수 표시
   if (category === "popular") {
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return "마감됨";
+    } else if (diffDays === 0) {
+      return "오늘 마감";
+    } else {
+      return `${diffDays}일 남음`;
+    }
+  }
+
+  // 연재시작코너인 경우: 연재도전과 동일하게 처리
+  if (category === "serial") {
     const diffTime = deadline - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -324,6 +338,72 @@ export async function getTodayDeadlinePosts() {
  */
 export async function getPaidSeriesPosts() {
   return getPostsByCategory("paid");
+}
+
+/**
+ * 연재시작코너 posts 가져오기
+ */
+export async function getSerialPosts() {
+  return getPostsByCategory("serial");
+}
+
+/**
+ * 공유 조건 파싱 함수
+ * @param {string} requirement - 공유 조건 문자열 (예: "30공유")
+ * @returns {number|null} - 필요한 공유 개수 또는 null
+ */
+export function parseRequirement(requirement) {
+  if (!requirement) return null;
+  // "30공유", "50 공유", "100공유" 등의 형식에서 숫자 추출
+  const match = requirement.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * 연재도전 게시글 중 공유 조건이 충족된 것을 연재시작코너로 이동
+ */
+export async function movePopularToSerial() {
+  try {
+    // 연재도전 게시글 가져오기
+    const popularPosts = await getPopularPosts();
+
+    if (popularPosts.length === 0) {
+      return { moved: 0, errors: [] };
+    }
+
+    let movedCount = 0;
+    const errors = [];
+
+    // 각 게시글의 공유 조건 확인
+    for (const post of popularPosts) {
+      const requiredShareCount = parseRequirement(post.requirement);
+
+      if (requiredShareCount === null) {
+        continue; // 공유 조건이 없으면 스킵
+      }
+
+      // 현재 공유 개수가 조건을 충족하는지 확인
+      if (post.shareCount >= requiredShareCount) {
+        // 카테고리를 serial로 변경
+        const { error } = await supabase
+          .from("posts")
+          .update({ category: "serial" })
+          .eq("id", post.id);
+
+        if (error) {
+          console.error(`게시글 ${post.id} 이동 실패:`, error);
+          errors.push({ postId: post.id, error });
+        } else {
+          movedCount++;
+        }
+      }
+    }
+
+    return { moved: movedCount, errors };
+  } catch (err) {
+    console.error("연재도전 → 연재시작코너 이동 예외:", err);
+    return { moved: 0, errors: [{ error: err }] };
+  }
 }
 
 /**

@@ -463,14 +463,18 @@ export default function DetailContent({ post, tagList }) {
                 <div className="flex items-center gap-3 mb-3">
                   <span
                     className={`text-sm font-semibold px-4 py-1.5 rounded-full shadow-sm ${
-                      post.category === "popular"
+                      post.category === "serial"
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                        : post.category === "popular"
                         ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
                         : post.category === "deadline"
                         ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
                         : "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
                     }`}
                   >
-                    {post.category === "popular"
+                    {post.category === "serial"
+                      ? "연재시작코너"
+                      : post.category === "popular"
                       ? "연재도전"
                       : post.category === "deadline"
                       ? "오늘 마감"
