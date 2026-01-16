@@ -167,3 +167,44 @@ export async function getQAQuestionsCount(category = null) {
     return 0;
   }
 }
+
+/**
+ * QA 질문 상세 조회 (ID로)
+ */
+export async function getQAQuestionById(id) {
+  try {
+    const { data, error } = await supabase
+      .from("qa_questions")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("QA 질문 조회 오류:", error);
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    // 조회수 증가
+    await supabase
+      .from("qa_questions")
+      .update({ views: (data.views || 0) + 1 })
+      .eq("id", id);
+
+    // 데이터 포맷팅
+    return {
+      ...data,
+      date: data.created_at
+        ? new Date(data.created_at).toISOString().split("T")[0]
+        : "",
+      isSolved: data.is_solved,
+      isUrgent: data.is_urgent,
+    };
+  } catch (error) {
+    console.error("QA 질문 조회 중 오류:", error);
+    return null;
+  }
+}
