@@ -260,18 +260,6 @@ function LoginForm() {
             <div className="space-y-3">
               <button
                 type="button"
-                className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
-              >
-                카카오로 로그인
-              </button>
-              <button
-                type="button"
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg"
-              >
-                네이버로 로그인
-              </button>
-              <button
-                type="button"
                 onClick={handleGoogleLogin}
                 disabled={loading}
                 className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 font-semibold py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg border-2 border-gray-300 flex items-center justify-center gap-2"
