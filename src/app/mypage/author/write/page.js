@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
-import { createSerial } from "@/utils/posts";
+import { createSerial } from "@/utils/serials";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getPostByPostId, getPostById } from "@/utils/posts";
+import { getPostByPostId } from "@/utils/posts";
+import { getSerialById } from "@/utils/serials";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
@@ -33,7 +34,7 @@ export default function PostDetailContentWrapper() {
           
           // 연재 정보도 가져오기
           if (serialId) {
-            const serialData = await getPostById(parseInt(serialId));
+            const serialData = await getSerialById(parseInt(serialId));
             if (serialData) {
               setSerial(serialData);
             }

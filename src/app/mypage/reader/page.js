@@ -5,21 +5,21 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PostCard from "@/components/PostCard";
+import SerialCard from "@/components/SerialCard";
 import {
-  getUserSharedPosts,
+  getUserSharedSerials,
   getUserFavorites,
   removeFavorite,
-} from "@/utils/posts";
+} from "@/utils/serials";
 import Link from "next/link";
 
 export default function ReaderPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("shared"); // "shared" or "favorites"
-  const [sharedPosts, setSharedPosts] = useState([]);
-  const [favoritePosts, setFavoritePosts] = useState([]);
-  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [sharedSerials, setSharedSerials] = useState([]);
+  const [favoriteSerials, setFavoriteSerials] = useState([]);
+  const [loadingSerials, setLoadingSerials] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -76,19 +76,19 @@ export default function ReaderPage() {
   const loadPosts = async () => {
     if (!user) return;
 
-    setLoadingPosts(true);
+    setLoadingSerials(true);
     try {
       if (activeTab === "shared") {
-        const posts = await getUserSharedPosts(user.id);
-        setSharedPosts(posts);
+        const serials = await getUserSharedSerials(user.id);
+        setSharedSerials(serials);
       } else {
-        const posts = await getUserFavorites(user.id);
-        setFavoritePosts(posts);
+        const serials = await getUserFavorites(user.id);
+        setFavoriteSerials(serials);
       }
     } catch (error) {
       console.error("게시글 로드 오류:", error);
     } finally {
-      setLoadingPosts(false);
+      setLoadingSerials(false);
     }
   };
 
@@ -97,7 +97,7 @@ export default function ReaderPage() {
 
     const result = await removeFavorite(postId, user.id);
     if (result.success) {
-      setFavoritePosts((prev) => prev.filter((post) => post.id !== postId));
+      setFavoriteSerials((prev) => prev.filter((post) => post.id !== postId));
     }
   };
 
@@ -116,7 +116,8 @@ export default function ReaderPage() {
     return null;
   }
 
-  const currentPosts = activeTab === "shared" ? sharedPosts : favoritePosts;
+  const currentSerials =
+    activeTab === "shared" ? sharedSerials : favoriteSerials;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -144,7 +145,9 @@ export default function ReaderPage() {
             마이페이지로 돌아가기
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">독자페이지</h1>
-          <p className="text-gray-600">공유한 게시글과 관심있는 글을 확인하세요.</p>
+          <p className="text-gray-600">
+            공유한 게시글과 관심있는 글을 확인하세요.
+          </p>
         </div>
 
         {/* 탭 메뉴 */}
@@ -159,7 +162,7 @@ export default function ReaderPage() {
                     : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
-                공유한 게시글 ({sharedPosts.length})
+                공유한 게시글 ({sharedSerials.length})
               </button>
               <button
                 onClick={() => setActiveTab("favorites")}
@@ -169,19 +172,19 @@ export default function ReaderPage() {
                     : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
-                관심있는 글 ({favoritePosts.length})
+                관심있는 글 ({favoriteSerials.length})
               </button>
             </nav>
           </div>
         </div>
 
         {/* 게시글 목록 */}
-        {loadingPosts ? (
+        {loadingSerials ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">로딩 중...</p>
           </div>
-        ) : currentPosts.length === 0 ? (
+        ) : currentSerials.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <svg
               className="w-16 h-16 text-gray-400 mx-auto mb-4"
@@ -210,12 +213,12 @@ export default function ReaderPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentPosts.map((post) => (
-              <div key={post.id} className="relative">
-                <PostCard post={post} variant="default" />
+            {currentSerials.map((serial) => (
+              <div key={serial.id} className="relative">
+                <SerialCard serial={serial} variant="default" />
                 {activeTab === "favorites" && (
                   <button
-                    onClick={() => handleRemoveFavorite(post.id)}
+                    onClick={() => handleRemoveFavorite(serial.id)}
                     className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
                     title="관심있는 글에서 제거"
                   >
@@ -242,4 +245,3 @@ export default function ReaderPage() {
     </div>
   );
 }
-

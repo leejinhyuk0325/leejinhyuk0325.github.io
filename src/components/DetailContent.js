@@ -12,13 +12,11 @@ import {
   addFavorite,
   removeFavorite,
   hasUserFavorited,
-  getPostsBySerialId,
-  deletePost,
   deleteSerial,
-  isAdminEmail,
-} from "@/utils/posts";
+} from "@/utils/serials";
+import { getPostsBySerialId, deletePost, isAdminEmail } from "@/utils/posts";
 
-export default function DetailContent({ post, tagList }) {
+export default function DetailContent({ serial, tagList }) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -27,7 +25,7 @@ export default function DetailContent({ post, tagList }) {
   const [linkUrl, setLinkUrl] = useState("");
   const [isSubmittingLink, setIsSubmittingLink] = useState(false);
   const [linkError, setLinkError] = useState("");
-  const [shareCount, setShareCount] = useState(post.shareCount || 0);
+  const [shareCount, setShareCount] = useState(serial.shareCount || 0);
   const [isFavorited, setIsFavorited] = useState(false);
   const [checkingFavorite, setCheckingFavorite] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -41,7 +39,7 @@ export default function DetailContent({ post, tagList }) {
   useEffect(() => {
     const fetchLatestShareCount = async () => {
       try {
-        const latestCount = await getShareCount(post.id);
+        const latestCount = await getShareCount(serial.id);
         setShareCount(latestCount);
       } catch (error) {
         console.error("공유 수 가져오기 실패:", error);
@@ -49,7 +47,7 @@ export default function DetailContent({ post, tagList }) {
     };
 
     fetchLatestShareCount();
-  }, [post.id]);
+  }, [serial.id]);
 
   // 현재 사용자 확인
   useEffect(() => {
@@ -82,7 +80,7 @@ export default function DetailContent({ post, tagList }) {
         } = await supabase.auth.getSession();
 
         if (session) {
-          const favorited = await hasUserFavorited(post.id, session.user.id);
+          const favorited = await hasUserFavorited(serial.id, session.user.id);
           setIsFavorited(favorited);
         }
       } catch (error) {
@@ -93,14 +91,14 @@ export default function DetailContent({ post, tagList }) {
     };
 
     checkFavoriteStatus();
-  }, [post.id]);
+  }, [serial.id]);
 
   // 연재에 속한 글(posts) 가져오기
   useEffect(() => {
     const loadPosts = async () => {
       try {
         setLoadingPosts(true);
-        const postsData = await getPostsBySerialId(post.id);
+        const postsData = await getPostsBySerialId(serial.id);
         setPosts(postsData || []);
       } catch (error) {
         console.error("글 목록 로드 실패:", error);
@@ -110,13 +108,13 @@ export default function DetailContent({ post, tagList }) {
       }
     };
 
-    if (post.id) {
+    if (serial.id) {
       loadPosts();
     }
 
     // 페이지 포커스 시 글 목록 새로고침 (글 작성 후 돌아왔을 때 자동 업데이트)
     const handleFocus = () => {
-      if (post.id) {
+      if (serial.id) {
         loadPosts();
       }
     };
@@ -126,7 +124,7 @@ export default function DetailContent({ post, tagList }) {
     return () => {
       window.removeEventListener("focus", handleFocus);
     };
-  }, [post.id]);
+  }, [serial.id]);
 
   const handleToggleFavorite = async () => {
     const {
@@ -139,16 +137,16 @@ export default function DetailContent({ post, tagList }) {
     }
 
     const userId = session.user.id;
-    const postId = post.id;
+    const serialId = serial.id;
 
     try {
       if (isFavorited) {
-        const result = await removeFavorite(postId, userId);
+        const result = await removeFavorite(serialId, userId);
         if (result.success) {
           setIsFavorited(false);
         }
       } else {
-        const result = await addFavorite(postId, userId);
+        const result = await addFavorite(serialId, userId);
         if (result.success) {
           setIsFavorited(true);
         }
@@ -416,14 +414,14 @@ export default function DetailContent({ post, tagList }) {
     if (!capturedImage) return;
 
     const link = document.createElement("a");
-    link.download = `${post.title || "taste-application"}.jpg`;
+    link.download = `${serial.title || "taste-application"}.jpg`;
     link.href = capturedImage;
     link.click();
   };
 
   const handleShare = async () => {
     const tagsText = tagList.join(" ");
-    const shareText = `[${post.title}]\n\n${post.intro}\n\n${tagsText}`;
+    const shareText = `[${serial.title}]\n\n${serial.intro}\n\n${tagsText}`;
 
     try {
       await navigator.clipboard.writeText(shareText);
@@ -477,9 +475,9 @@ export default function DetailContent({ post, tagList }) {
 
     try {
       const userId = session.user.id;
-      const postId = post.id;
+      const serialId = serial.id;
 
-      const alreadyShared = await hasUserShared(postId, userId);
+      const alreadyShared = await hasUserShared(serialId, userId);
 
       if (alreadyShared) {
         setLinkError("이미 이 글의 링크를 등록하셨습니다.");
@@ -500,7 +498,9 @@ export default function DetailContent({ post, tagList }) {
       setIsLinkFormOpen(false);
     } catch (error) {
       console.error("링크 등록 중 오류:", error);
-      setLinkError("링크 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      setLinkError(
+        "링크 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setIsSubmittingLink(false);
     }
@@ -556,7 +556,7 @@ export default function DetailContent({ post, tagList }) {
       return;
     }
 
-    const result = await deleteSerial(post.id, currentUserEmail);
+    const result = await deleteSerial(serial.id, currentUserEmail);
 
     if (result.success) {
       alert("연재가 삭제되었습니다.");
@@ -573,7 +573,7 @@ export default function DetailContent({ post, tagList }) {
 
   // 공유 조건 달성 여부 확인 (requirement는 이제 INTEGER)
   const isRequirementMet = () => {
-    const requiredShareCount = post.requirement;
+    const requiredShareCount = serial.requirement;
     if (requiredShareCount === null || requiredShareCount === undefined)
       return false;
     return shareCount >= requiredShareCount;
@@ -581,8 +581,8 @@ export default function DetailContent({ post, tagList }) {
 
   // 작성자인지 확인
   const isAuthor = () => {
-    if (!currentUserId || !post.author_id) return false;
-    return currentUserId === post.author_id;
+    if (!currentUserId || !serial.author_id) return false;
+    return currentUserId === serial.author_id;
   };
 
   // 관리자인지 확인
@@ -606,30 +606,30 @@ export default function DetailContent({ post, tagList }) {
                 <div className="flex items-center gap-3 mb-3">
                   <span
                     className={`text-sm font-semibold px-4 py-1.5 rounded-full shadow-sm ${
-                      post.category === "serial"
+                      serial.category === "serial"
                         ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                        : post.category === "popular"
+                        : serial.category === "popular"
                         ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-                        : post.category === "deadline"
+                        : serial.category === "deadline"
                         ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
                         : "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
                     }`}
                   >
-                    {post.category === "serial"
+                    {serial.category === "serial"
                       ? "연재시작코너"
-                      : post.category === "popular"
+                      : serial.category === "popular"
                       ? "연재도전"
-                      : post.category === "deadline"
+                      : serial.category === "deadline"
                       ? "오늘 마감"
                       : "유료연재"}
                   </span>
                   <span className="text-sm text-gray-500">
-                    {post.deadlineDisplay || post.deadline}
+                    {serial.deadlineDisplay || serial.deadline}
                   </span>
                 </div>
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <h1 className="text-3xl font-bold text-gray-900 flex-1">
-                    {post.title}
+                    {serial.title}
                   </h1>
                   <div className="flex items-center gap-2">
                     {showAdminDeleteButton && (
@@ -700,7 +700,7 @@ export default function DetailContent({ post, tagList }) {
                     연재 시작 조건
                   </p>
                   <p className="text-lg font-bold text-blue-600">
-                    {post.requirement}공유
+                    {serial.requirement}공유
                   </p>
                 </div>
               </div>
@@ -712,7 +712,7 @@ export default function DetailContent({ post, tagList }) {
             <h2 className="text-xl font-bold text-gray-900 mb-4">도입부</h2>
             <div className="prose max-w-none">
               <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {post.intro}
+                {serial.intro}
               </div>
               <div className="text-center text-2xl text-yellow-400 mt-6">★</div>
             </div>
@@ -806,7 +806,7 @@ export default function DetailContent({ post, tagList }) {
                   return (
                     <Link
                       key={postItem.id}
-                      href={`/serials/${post.id}/posts/${postItem.id}`}
+                      href={`/serials/${serial.id}/posts/${postItem.id}`}
                       className="block border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -855,7 +855,7 @@ export default function DetailContent({ post, tagList }) {
         {/* 글쓰기 버튼 - 공유 조건 달성 시 작성자에게만 표시 */}
         {showWriteButton && (
           <Link
-            href={`/serials/${post.id}/posts/write`}
+            href={`/serials/${serial.id}/posts/write`}
             className="w-full mt-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-lg flex items-center justify-center gap-2"
           >
             <svg

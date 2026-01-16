@@ -5,8 +5,12 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PostCard from "@/components/PostCard";
-import { publishToPopular, getAllPosts, getPostsByAuthor } from "@/utils/posts";
+import SerialCard from "@/components/SerialCard";
+import {
+  publishSerialToPopular,
+  getAllSerials,
+  getSerialsByAuthor,
+} from "@/utils/serials";
 import Link from "next/link";
 
 export default function AuthorPage() {
@@ -76,12 +80,12 @@ export default function AuthorPage() {
     try {
       if (activeTab === "my") {
         // 내가 작성한 게시글만 가져오기 (author_id 기준)
-        const mine = await getPostsByAuthor(user.id);
+        const mine = await getSerialsByAuthor(user.id);
         setMyPosts(mine);
       } else {
         // 인기글 목록 가져오기
-        const all = await getAllPosts();
-        const popular = all.filter((post) => post.category === "popular");
+        const all = await getAllSerials();
+        const popular = all.filter((serial) => serial.category === "popular");
         setAllPosts(popular);
       }
     } catch (error) {
@@ -102,7 +106,7 @@ export default function AuthorPage() {
       return;
     }
 
-    const result = await publishToPopular(postId, user.id);
+    const result = await publishSerialToPopular(postId, user.id);
     if (result.success) {
       alert("연재도전에 연재되었습니다!");
       loadPosts();
@@ -244,7 +248,7 @@ export default function AuthorPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentPosts.map((post) => (
               <div key={post.id} className="relative">
-                <PostCard post={post} variant="default" />
+                <SerialCard serial={post} variant="default" />
                 {activeTab === "my" && post.category !== "popular" && (
                   <button
                     onClick={() => handlePublishToPopular(post.id)}
@@ -271,4 +275,3 @@ export default function AuthorPage() {
     </div>
   );
 }
-

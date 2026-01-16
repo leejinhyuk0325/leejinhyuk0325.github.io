@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import PostCard from "./PostCard";
+import SerialCard from "./SerialCard";
 
-export default function PostSection({
+export default function SerialSection({
   title,
-  posts,
+  serials,
   variant = "default",
   gridCols = "md:grid-cols-2 lg:grid-cols-3",
   initialCount = 3,
 }) {
   const [displayCount, setDisplayCount] = useState(initialCount);
-  const displayedPosts = posts.slice(0, displayCount);
-  const hasMore = posts.length > displayCount;
+  const displayedSerials = serials.slice(0, displayCount);
+  const hasMore = serials.length > displayCount;
 
   const handleShowMore = () => {
-    setDisplayCount((prev) => Math.min(prev + 3, posts.length));
+    setDisplayCount((prev) => Math.min(prev + 3, serials.length));
   };
 
   return (
@@ -24,8 +24,12 @@ export default function PostSection({
         <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
       </div>
       <div className={`grid grid-cols-1 ${gridCols} gap-6`}>
-        {displayedPosts.map((post, index) => (
-          <PostCard key={post.id || index} post={post} variant={variant} />
+        {displayedSerials.map((serial, index) => (
+          <SerialCard
+            key={serial.id || index}
+            serial={serial}
+            variant={variant}
+          />
         ))}
       </div>
       {hasMore && (
@@ -34,7 +38,7 @@ export default function PostSection({
             onClick={handleShowMore}
             className="text-blue-600 hover:text-blue-700 font-medium px-4 py-2 rounded-md hover:bg-blue-50 transition-colors"
           >
-            더보기 ({posts.length - displayCount}개 더)
+            더보기 ({serials.length - displayCount}개 더)
           </button>
         </div>
       )}

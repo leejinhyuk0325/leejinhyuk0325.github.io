@@ -3,21 +3,21 @@
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PostSection from "@/components/PostSection";
+import SerialSection from "@/components/SerialSection";
 import {
-  getPopularPosts,
-  getTodayDeadlinePosts,
-  getPaidSeriesPosts,
+  getPopularSerials,
+  getTodayDeadlineSerials,
+  getPaidSeriesSerials,
   getSerialPosts,
   movePopularToSerial,
   moveSerialToPaid,
-} from "@/utils/posts";
+} from "@/utils/serials";
 
 export default function Home() {
-  const [popularPosts, setPopularPosts] = useState([]);
+  const [popularSerials, setPopularSerials] = useState([]);
   const [todayDeadline, setTodayDeadline] = useState([]);
   const [paidSeries, setPaidSeries] = useState([]);
-  const [serialPosts, setSerialPosts] = useState([]);
+  const [serialSerials, setSerialSerials] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,16 +33,16 @@ export default function Home() {
 
         // 모든 데이터 가져오기
         const [popular, deadline, paid, serial] = await Promise.all([
-          getPopularPosts(),
-          getTodayDeadlinePosts(),
-          getPaidSeriesPosts(),
+          getPopularSerials(),
+          getTodayDeadlineSerials(),
+          getPaidSeriesSerials(),
           getSerialPosts(),
         ]);
 
-        setPopularPosts(popular);
+        setPopularSerials(popular);
         setTodayDeadline(deadline);
         setPaidSeries(paid);
-        setSerialPosts(serial);
+        setSerialSerials(serial);
       } catch (error) {
         console.error("데이터 로드 오류:", error);
       } finally {
@@ -75,33 +75,33 @@ export default function Home() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PostSection
+        <SerialSection
           title="연재시작코너"
-          posts={serialPosts}
+          serials={serialSerials}
           variant="default"
           gridCols="md:grid-cols-2 lg:grid-cols-3"
           initialCount={3}
         />
 
-        <PostSection
+        <SerialSection
           title="연재도전"
-          posts={popularPosts}
+          serials={popularSerials}
           variant="default"
           gridCols="md:grid-cols-2 lg:grid-cols-3"
           initialCount={3}
         />
 
-        <PostSection
+        <SerialSection
           title="오늘 마감"
-          posts={todayDeadline}
+          serials={todayDeadline}
           variant="urgent"
           gridCols="md:grid-cols-2 lg:grid-cols-3"
           initialCount={3}
         />
 
-        <PostSection
+        <SerialSection
           title="유료연재코너"
-          posts={paidSeries}
+          serials={paidSeries}
           variant="paid"
           gridCols="md:grid-cols-2 lg:grid-cols-3"
           initialCount={3}

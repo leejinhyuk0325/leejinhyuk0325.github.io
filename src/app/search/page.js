@@ -4,8 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PostCard from "@/components/PostCard";
-import { searchPosts } from "@/utils/posts";
+import SerialCard from "@/components/SerialCard";
+import { searchSerials } from "@/utils/serials";
 
 function SearchContent() {
   const router = useRouter();
@@ -26,7 +26,7 @@ function SearchContent() {
 
       setLoading(true);
       try {
-        const results = await searchPosts(searchQuery);
+        const results = await searchSerials(searchQuery);
         setFilteredPosts(results);
       } catch (error) {
         console.error("검색 오류:", error);
@@ -127,7 +127,7 @@ function SearchContent() {
             ) : filteredPosts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPosts.map((post) => (
-                  <PostCard key={post.id} post={post} variant="default" />
+                  <SerialCard key={post.id} serial={post} variant="default" />
                 ))}
               </div>
             ) : (

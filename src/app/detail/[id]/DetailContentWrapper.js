@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { getPostById } from "@/utils/posts";
+import { getSerialById } from "@/utils/serials";
 import Header from "@/components/Header";
 import DetailContent from "@/components/DetailContent";
 
 export default function DetailContentWrapper() {
   const params = useParams();
   const id = params?.id;
-  const [post, setPost] = useState(null);
+  const [serial, setSerial] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -23,9 +23,9 @@ export default function DetailContentWrapper() {
 
       try {
         setLoading(true);
-        const postData = await getPostById(id);
-        if (postData) {
-          setPost(postData);
+        const serialData = await getSerialById(id);
+        if (serialData) {
+          setSerial(serialData);
         } else {
           setError("게시글을 찾을 수 없습니다.");
         }
@@ -51,7 +51,7 @@ export default function DetailContentWrapper() {
     );
   }
 
-  if (error || !post) {
+  if (error || !serial) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
@@ -64,12 +64,12 @@ export default function DetailContentWrapper() {
     );
   }
 
-  const tagList = post.tagList || post.tags?.split(" ") || [];
+  const tagList = serial.tagList || serial.tags?.split(" ") || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <DetailContent post={post} tagList={tagList} />
+      <DetailContent serial={serial} tagList={tagList} />
     </div>
   );
 }
