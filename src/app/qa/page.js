@@ -1,147 +1,59 @@
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { getQACategories, getQAFaqs, getQAQuestions } from "@/utils/qa";
 
-export default function QAPage() {
-  const categories = [
-    { id: "all", name: "전체", count: 156 },
-    { id: "account", name: "계정/로그인", count: 32 },
-    { id: "taste", name: "TASTE 신청", count: 45 },
-    { id: "payment", name: "결제/환불", count: 18 },
-    { id: "content", name: "콘텐츠 관련", count: 28 },
-    { id: "technical", name: "기술 지원", count: 15 },
-    { id: "other", name: "기타", count: 18 },
-  ];
+function QAContent() {
+  const searchParams = useSearchParams();
+  const category = searchParams?.get("category") || "all";
+  
+  const [categories, setCategories] = useState([]);
+  const [faqs, setFaqs] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const faqs = [
-    {
-      id: 1,
-      question: "TASTE 신청은 어떻게 하나요?",
-      answer:
-        "원하는 작품의 상세 페이지에서 'TASTE 신청하기' 버튼을 클릭하시면 됩니다. 신청 후 공유 조건을 달성하면 연재가 시작됩니다.",
-      category: "TASTE 신청",
-      views: 1234,
-      helpful: 89,
-    },
-    {
-      id: 2,
-      question: "공유는 어떻게 하나요?",
-      answer:
-        "작품 상세 페이지 하단의 공유 버튼을 클릭하시면 SNS나 링크 공유가 가능합니다. 공유 횟수는 실시간으로 반영됩니다.",
-      category: "TASTE 신청",
-      views: 987,
-      helpful: 76,
-    },
-    {
-      id: 3,
-      question: "로그인은 필수인가요?",
-      answer:
-        "작품을 보는 것은 로그인 없이도 가능하지만, TASTE 신청이나 댓글 작성 등 일부 기능은 로그인이 필요합니다.",
-      category: "계정/로그인",
-      views: 856,
-      helpful: 54,
-    },
-    {
-      id: 4,
-      question: "유료 연재는 어떻게 구매하나요?",
-      answer:
-        "유료 연재 코너의 작품은 결제 후 열람이 가능합니다. 결제는 신용카드, 계좌이체 등 다양한 방법을 지원합니다.",
-      category: "결제/환불",
-      views: 743,
-      helpful: 42,
-    },
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [categoriesData, faqsData, questionsData] = await Promise.all([
+          getQACategories(),
+          getQAFaqs(4),
+          getQAQuestions({ category, limit: 20 }),
+        ]);
+        setCategories(categoriesData);
+        setFaqs(faqsData);
+        setQuestions(questionsData);
+      } catch (error) {
+        console.error("데이터 로드 오류:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const questions = [
-    {
-      id: 1,
-      category: "TASTE 신청",
-      title: "공유 조건을 달성했는데 연재가 시작되지 않아요",
-      author: "궁금이",
-      date: "2024-01-15",
-      views: 234,
-      answers: 2,
-      isSolved: false,
-      isUrgent: false,
-    },
-    {
-      id: 2,
-      category: "계정/로그인",
-      title: "비밀번호를 잊어버렸어요. 어떻게 찾나요?",
-      author: "비밀번호분실",
-      date: "2024-01-14",
-      views: 189,
-      answers: 1,
-      isSolved: true,
-      isUrgent: false,
-    },
-    {
-      id: 3,
-      category: "콘텐츠 관련",
-      title: "작품 추천 기능은 어떻게 사용하나요?",
-      author: "독서왕",
-      date: "2024-01-13",
-      views: 312,
-      answers: 3,
-      isSolved: false,
-      isUrgent: false,
-    },
-    {
-      id: 4,
-      category: "기술 지원",
-      title: "페이지가 제대로 로드되지 않아요",
-      author: "기술고민",
-      date: "2024-01-12",
-      views: 156,
-      answers: 0,
-      isSolved: false,
-      isUrgent: true,
-    },
-    {
-      id: 5,
-      category: "결제/환불",
-      title: "환불은 어떻게 받나요?",
-      author: "환불문의",
-      date: "2024-01-11",
-      views: 278,
-      answers: 1,
-      isSolved: true,
-      isUrgent: false,
-    },
-    {
-      id: 6,
-      category: "TASTE 신청",
-      title: "여러 작품에 동시에 신청할 수 있나요?",
-      author: "다작신청",
-      date: "2024-01-10",
-      views: 201,
-      answers: 2,
-      isSolved: false,
-      isUrgent: false,
-    },
-    {
-      id: 7,
-      category: "콘텐츠 관련",
-      title: "작품 검색은 어떻게 하나요?",
-      author: "검색초보",
-      date: "2024-01-09",
-      views: 167,
-      answers: 1,
-      isSolved: true,
-      isUrgent: false,
-    },
-    {
-      id: 8,
-      category: "기타",
-      title: "작가 지원은 어떻게 하나요?",
-      author: "작가지망생",
-      date: "2024-01-08",
-      views: 145,
-      answers: 0,
-      isSolved: false,
-      isUrgent: false,
-    },
-  ];
+    loadData();
+  }, [category]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">로딩 중...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,7 +74,8 @@ export default function QAPage() {
             자주 묻는 질문
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {faqs.map((faq) => (
+            {faqs && faqs.length > 0 ? (
+              faqs.map((faq) => (
               <div
                 key={faq.id}
                 className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
@@ -184,7 +97,12 @@ export default function QAPage() {
                   {faq.answer}
                 </p>
               </div>
-            ))}
+              ))
+            ) : (
+              <div className="col-span-2 text-center text-gray-500 py-8">
+                등록된 FAQ가 없습니다.
+              </div>
+            )}
           </div>
         </div>
 
@@ -240,67 +158,73 @@ export default function QAPage() {
 
               {/* 질문 목록 */}
               <div className="divide-y divide-gray-200">
-                {questions.map((question, index) => (
-                  <Link
-                    key={question.id}
-                    href={`/qa/${question.id}`}
-                    className="block px-6 py-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="grid grid-cols-12 gap-4 items-center">
-                      <div className="col-span-1 text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          {question.isSolved ? (
-                            <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">
-                              해결
+                {questions && questions.length > 0 ? (
+                  questions.map((question, index) => (
+                    <Link
+                      key={question.id}
+                      href={`/qa/${question.id}`}
+                      className="block px-6 py-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="grid grid-cols-12 gap-4 items-center">
+                        <div className="col-span-1 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            {question.isSolved ? (
+                              <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">
+                                해결
+                              </span>
+                            ) : (
+                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                                대기
+                              </span>
+                            )}
+                            {question.isUrgent && (
+                              <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
+                                긴급
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="col-span-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                              {question.category}
                             </span>
-                          ) : (
-                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-                              대기
+                            <span className="text-sm font-medium text-gray-900 truncate">
+                              {question.title}
                             </span>
-                          )}
-                          {question.isUrgent && (
-                            <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
-                              긴급
+                          </div>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-gray-500">
+                              조회 {question.views}
                             </span>
-                          )}
+                          </div>
+                        </div>
+                        <div className="col-span-2 text-center text-sm text-gray-600">
+                          {question.author}
+                        </div>
+                        <div className="col-span-2 text-center text-sm text-gray-500">
+                          {question.date}
+                        </div>
+                        <div className="col-span-1 text-center">
+                          <span className="text-sm font-medium text-blue-600">
+                            {question.answers}
+                          </span>
                         </div>
                       </div>
-                      <div className="col-span-6">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                            {question.category}
-                          </span>
-                          <span className="text-sm font-medium text-gray-900 truncate">
-                            {question.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-gray-500">
-                            조회 {question.views}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="col-span-2 text-center text-sm text-gray-600">
-                        {question.author}
-                      </div>
-                      <div className="col-span-2 text-center text-sm text-gray-500">
-                        {question.date}
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <span className="text-sm font-medium text-blue-600">
-                          {question.answers}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))
+                ) : (
+                  <div className="px-6 py-12 text-center text-gray-500">
+                    등록된 질문이 없습니다.
+                  </div>
+                )}
               </div>
 
               {/* 페이지네이션 */}
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
-                    총 {questions.length}개의 질문
+                    총 {questions?.length || 0}개의 질문
                   </div>
                   <div className="flex items-center gap-2">
                     <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md transition-colors">
@@ -348,6 +272,29 @@ export default function QAPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function QAPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">로딩 중...</p>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      }
+    >
+      <QAContent />
+    </Suspense>
   );
 }
 

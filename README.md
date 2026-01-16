@@ -255,3 +255,150 @@ export default function PostDetailPage() {
 ```
 Error: Page "/serials/[id]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
 ```
+
+## 리스트 페이지 구현 가이드
+
+### 클라이언트 컴포넌트 사용 규칙
+
+**리스트 페이지는 반드시 클라이언트 컴포넌트(`"use client"`)를 사용해야 합니다.**
+
+리스트 페이지는 Supabase에서 실시간으로 데이터를 가져와서 표시하며, 사용자 인터랙션(필터링, 검색, 페이지네이션 등)을 처리해야 하기 때문입니다.
+
+#### 리스트 페이지 예시
+
+- ✅ 메인 페이지 (`/page.js`) - 연재 작품 리스트
+- ✅ QA 페이지 (`/qa/page.js`) - 질문 리스트
+- ✅ 커뮤니티 페이지 (`/community/page.js`) - 커뮤니티 게시글 리스트
+- ✅ 검색 페이지 (`/search/page.js`) - 검색 결과 리스트
+
+#### 리스트 페이지 구현 패턴
+
+```javascript
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { getDataList } from "@/utils/your-utils";
+
+function ListContent() {
+  const searchParams = useSearchParams();
+  const filter = searchParams?.get("filter") || "all";
+  
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const dataList = await getDataList({ filter });
+        setData(dataList);
+      } catch (error) {
+        console.error("데이터 로드 오류:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [filter]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">로딩 중...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 리스트 컨텐츠 */}
+        {data && data.length > 0 ? (
+          data.map((item) => (
+            <div key={item.id}>
+              {/* 아이템 렌더링 */}
+            </div>
+          ))
+        ) : (
+          <div className="text-center text-gray-500 py-8">
+            등록된 항목이 없습니다.
+          </div>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+export default function ListPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50">
+          <Header />
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">로딩 중...</p>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      }
+    >
+      <ListContent />
+    </Suspense>
+  );
+}
+```
+
+#### 주요 구현 사항
+
+1. **`"use client"` 지시어 필수**: 파일 최상단에 반드시 추가
+2. **`useState`, `useEffect` 사용**: 데이터 로딩 및 상태 관리
+3. **`useSearchParams` 사용**: URL 쿼리 파라미터 읽기 (필터링, 검색 등)
+4. **`Suspense`로 감싸기**: `useSearchParams`를 사용하는 컴포넌트는 Suspense로 감싸야 함
+5. **로딩 상태 처리**: 데이터 로딩 중 사용자에게 피드백 제공
+6. **빈 데이터 처리**: 데이터가 없을 때 적절한 메시지 표시
+7. **에러 핸들링**: try-catch로 에러 처리
+
+#### Utils 파일 구조
+
+리스트 페이지의 데이터 조회 로직은 `src/utils/` 폴더에 별도 파일로 분리합니다:
+
+```
+src/utils/
+  ├── qa.js          # QA 관련 함수들
+  ├── community.js   # 커뮤니티 관련 함수들
+  ├── serials.ts     # 연재 작품 관련 함수들
+  └── ...
+```
+
+각 utils 파일에는 다음 함수들이 포함됩니다:
+
+- `getList()`: 리스트 조회
+- `getListCount()`: 리스트 개수 조회
+- `getCategories()`: 카테고리 조회 (필요한 경우)
+- 기타 도메인별 함수들
+
+#### 참고 예시
+
+- ✅ `/src/app/page.js` - 메인 페이지 (연재 작품 리스트)
+- ✅ `/src/app/qa/page.js` - QA 페이지 (질문 리스트)
+- ✅ `/src/app/community/page.js` - 커뮤니티 페이지 (게시글 리스트)
