@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getAllConfigValues } from "./config";
 
 /**
  * 마감일 계산 및 표시 형식 변환 헬퍼 함수
@@ -7,7 +8,11 @@ import { supabase } from "./supabase";
  * @param {string} category - 카테고리 ('popular', 'deadline', 'paid', 'serial')
  * @returns {string} - 표시할 마감일 문자열
  */
-export function formatDeadline(createdAt: string | Date, deadlineDays: number | null | undefined, category: string): string {
+export function formatDeadline(
+  createdAt: string | Date,
+  deadlineDays: number | null | undefined,
+  category: string
+): string {
   if (!createdAt || deadlineDays === null || deadlineDays === undefined) {
     return "마감일 정보 없음";
   }
@@ -108,7 +113,9 @@ export async function getShareCount(serialId: number): Promise<number> {
 /**
  * 여러 Serial의 share 개수 가져오기 (배치)
  */
-async function getShareCounts(serialIds: number[]): Promise<Record<number, number>> {
+async function getShareCounts(
+  serialIds: number[]
+): Promise<Record<number, number>> {
   try {
     const { data, error } = await supabase
       .from("shares")
@@ -414,7 +421,9 @@ export async function getSerialPosts() {
  * @param {number} requirement - 공유 조건 숫자
  * @returns {number|null} - 필요한 공유 개수 또는 null
  */
-export function parseRequirement(requirement: number | null | undefined): number | null {
+export function parseRequirement(
+  requirement: number | null | undefined
+): number | null {
   if (requirement === null || requirement === undefined) return null;
   // requirement가 이미 숫자이므로 그대로 반환
   return typeof requirement === "number"
@@ -474,6 +483,26 @@ export async function movePopularToSerial() {
  */
 export async function moveSerialToPaid() {
   try {
+    // Config에서 모든 설정값 한 번에 가져오기
+    const configValues = await getAllConfigValues();
+
+    // 필요한 설정값 필터링 및 변환
+    const minimumShareCountStr =
+      configValues["minimum_serial_share_count_for_paid"];
+    const minimumEpisodeCountStr = configValues["minimum_serial_episode_count"];
+
+    // string을 number로 변환 (기본값: 1, 2)
+    const minimumShareCount = minimumShareCountStr
+      ? parseInt(minimumShareCountStr, 10) || 1
+      : 1;
+    const minimumEpisodeCount = minimumEpisodeCountStr
+      ? parseInt(minimumEpisodeCountStr, 10) || 2
+      : 2;
+
+    console.log(
+      `설정값: 최소 공유 ${minimumShareCount}회, 최소 게시글 ${minimumEpisodeCount}개`
+    );
+
     // 연재시작코너 게시글 가져오기
     const serialPosts = await getSerialPosts();
 
@@ -501,15 +530,19 @@ export async function moveSerialToPaid() {
         `Serial ${post.id}: 공유 ${shareCount}회, 게시글 ${postCount}개`
       );
 
-      // 공유 1회 이상 확인
-      if (shareCount < 1) {
-        console.log(`Serial ${post.id}: 공유 조건 미달 (${shareCount} < 1)`);
+      // 공유 조건 확인 (minimum_serial_share_count_for_paid의 값을 사용해서 체크)
+      if (shareCount < minimumShareCount) {
+        console.log(
+          `Serial ${post.id}: 공유 조건 미달 (${shareCount} < ${minimumShareCount})`
+        );
         continue;
       }
 
-      // 게시글 2개 이상 확인
-      if (postCount < 2) {
-        console.log(`Serial ${post.id}: 게시글 조건 미달 (${postCount} < 2)`);
+      // 게시글 조건 확인 (minimum_serial_episode_count의 값을 사용해서 체크)
+      if (postCount < minimumEpisodeCount) {
+        console.log(
+          `Serial ${post.id}: 게시글 조건 미달 (${postCount} < ${minimumEpisodeCount})`
+        );
         continue;
       }
 
@@ -570,14 +603,15 @@ export async function searchSerials(query: string) {
       }
 
       // 클라이언트 측에서 태그 필터링 (Supabase의 배열 검색 제한으로 인해)
-      const filtered = data?.filter((serial) => {
-        const tagList = serial.tag_list || [];
-        return tagList.some(
-          (tag: string) =>
-            tag.toLowerCase().replace("#", "") === tagName ||
-            tag.toLowerCase().includes(tagName)
-        );
-      }) || [];
+      const filtered =
+        data?.filter((serial) => {
+          const tagList = serial.tag_list || [];
+          return tagList.some(
+            (tag: string) =>
+              tag.toLowerCase().replace("#", "") === tagName ||
+              tag.toLowerCase().includes(tagName)
+          );
+        }) || [];
 
       // share 개수 가져오기
       const serialIds = filtered.map((serial) => serial.id);
@@ -749,7 +783,10 @@ export async function removeShare(serialId: number, userId: string) {
 /**
  * 사용자가 특정 Post를 share했는지 확인
  */
-export async function hasUserShared(serialId: number, userId: string): Promise<boolean> {
+export async function hasUserShared(
+  serialId: number,
+  userId: string
+): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from("shares")
@@ -952,7 +989,10 @@ export async function getUserFavorites(userId: string) {
 /**
  * 사용자가 특정 Post를 관심있는 글에 추가했는지 확인
  */
-export async function hasUserFavorited(serialId: number, userId: string): Promise<boolean> {
+export async function hasUserFavorited(
+  serialId: number,
+  userId: string
+): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from("favorites")
@@ -1029,7 +1069,10 @@ export async function publishSerialToPopular(serialId: number, userId: string) {
  * 연재(serial) 삭제
  * 관리자만 삭제 가능
  */
-export async function deleteSerial(serialId: number, userEmail: string | null | undefined) {
+export async function deleteSerial(
+  serialId: number,
+  userEmail: string | null | undefined
+) {
   try {
     if (!serialId) {
       return { success: false, error: new Error("잘못된 요청입니다.") };
@@ -1047,7 +1090,7 @@ export async function deleteSerial(serialId: number, userEmail: string | null | 
     // 연재에 속한 모든 글(posts) 삭제
     const { getPostsBySerialId } = await import("./posts");
     const posts = await getPostsBySerialId(serialId);
-    
+
     if (posts && posts.length > 0) {
       const { error: postsError } = await supabase
         .from("posts")
